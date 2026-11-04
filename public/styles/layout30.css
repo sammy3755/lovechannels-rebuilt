@@ -1,0 +1,27 @@
+/* The video contains its own typography, so its picture stays unobstructed. */
+.ac-hero-main.is-showing-film .ac-hero-actions{display:none}
+.ac-hero-slide.is-film .ac-hero-shade{display:none}
+/* Both gathering carousels share a frame, card proportions and cylindrical radius. */
+.ac-gathering-layout .ac-deck .ac-deck-stage{height:510px;perspective:1800px}
+.ac-gathering-layout .ac-deck .ac-card{width:270px;height:438px}
+.ac-gathering-layout .ac-deck .ac-card>img{height:296px}
+/* Give the inward testimony carousel the full viewport; keep its title and links aligned. */
+.ac-first-testimony{width:100%;max-width:none;margin-inline:0;overflow:clip}
+.ac-first-testimony>.ac-section-head,.ac-first-testimony>.ac-story-links{width:var(--ac-page);margin-inline:auto}
+@media(min-width:801px){
+ .ac-first-testimony .slider-container{width:clamp(300px,27vw,480px);height:auto;aspect-ratio:3/4;perspective:calc(var(--testimony-radius,500px)*4)}
+ .ac-first-testimony .slider-stage{padding:40px 0}
+}
+@media(max-width:1100px) and (min-width:801px){
+ .ac-gathering-layout .ac-deck .ac-deck-stage{height:495px}
+ .ac-gathering-layout .ac-deck .ac-card{width:240px;height:420px}
+ .ac-gathering-layout .ac-deck .ac-card>img{height:278px}
+}
+@media(max-width:800px){
+ .ac-gathering-layout .ac-deck .ac-card{width:min(270px,72vw);height:430px}
+ .ac-gathering-layout .ac-deck .ac-card>img{height:290px}
+}
+@media(max-width:380px){
+ .ac-gathering-layout .ac-deck .ac-card{height:410px}
+ .ac-gathering-layout .ac-deck .ac-card>img{height:270px}
+}

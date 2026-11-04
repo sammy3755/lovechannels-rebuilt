@@ -9,7 +9,7 @@ export function initRing(root){
   const front=((Math.round(-angle/step)%cards.length)+cards.length)%cards.length;
   ring.style.transform=`translateZ(${-radius}px) rotateY(${angle}deg)`;
   root.dataset.rotationAngle=angle.toFixed(2);
-  if(front!==lastFront){root.dataset.activeIndex=front;count.textContent=`${String(front+1).padStart(2,'0')} / ${String(cards.length).padStart(2,'0')}`;}
+  if(front!==lastFront){const logical=Number(cards[front].dataset.sourceIndex??front);root.dataset.activeIndex=logical;count.textContent=`${String(logical+1).padStart(2,'0')} / ${String(root.dataset.logicalCount||cards.length).padStart(2,'0')}`;}
   cards.forEach((card,i)=>{
    const distance=Math.abs(((i*step+angle+540)%360+360)%360-180);
    card.style.opacity=String(1-Math.min(distance,160)/160*.65);
@@ -18,7 +18,7 @@ export function initRing(root){
    if(front!==lastFront){card.classList.toggle('is-front',i===front);card.inert=i!==front;card.setAttribute('aria-hidden',i!==front);}
   });lastFront=front;
  };
- const measure=()=>{radius=cards.length===1?0:cards.length===2?cards[0].offsetWidth*.7:Math.round((cards[0].offsetWidth/1.9)/Math.tan(Math.PI/cards.length)*1.22);cards.forEach((card,i)=>card.style.transform=`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`);render();};
+ const measure=()=>{const sharedSlots=Math.max(6,...[...document.querySelectorAll('.ac-deck .ac-ring')].map(r=>r.children.length));radius=cards.length===1?0:cards.length===2?cards[0].offsetWidth*.7:Math.round((cards[0].offsetWidth/1.9)/Math.tan(Math.PI/sharedSlots)*1.22);cards.forEach((card,i)=>card.style.transform=`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`);render();};
  const resize=new ResizeObserver(()=>{if(!root.isConnected){resize.disconnect();return;}measure();});resize.observe(stage);measure();
  const go=direction=>{if(cards.length<2)return;rotation.interacted(3500);angle=(Math.round(angle/step)-direction)*step;ring.classList.add('is-stepping');render();};
  root.querySelector(`#${prefix}-prev`).addEventListener('click',()=>go(-1));root.querySelector(`#${prefix}-next`).addEventListener('click',()=>go(1));

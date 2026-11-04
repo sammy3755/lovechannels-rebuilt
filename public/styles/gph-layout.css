@@ -4,5 +4,5 @@
 .ac-gph .ac-gph-art{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(10,minmax(0,1fr));width:min(100%,520px);aspect-ratio:1;height:auto;min-height:0;position:relative;isolation:isolate;margin:0 auto;align-self:center}
 .ac-gph .ac-gph-art>img{position:static;inset:auto;width:100%;height:100%;max-width:none;min-width:0;min-height:0;box-sizing:border-box;object-fit:contain;border:6px solid #fff;border-radius:20px;background:#fff;box-shadow:0 8px 26px #1635520a}
 .ac-gph .ac-gph-poster-one{grid-column:3/11;grid-row:1/9;z-index:1}
-.ac-gph .ac-gph-poster-two{grid-column:1/7;grid-row:5/11;z-index:2}
+.ac-gph .ac-gph-poster-two{grid-column:2/7;grid-row:6/11;z-index:2}
 @media(max-width:800px){.ac-gph{grid-template-columns:minmax(0,1fr);gap:28px}.ac-gph .ac-gph-art{width:min(100%,450px)}.ac-gph .ac-gph-art>img{border-width:5px;border-radius:17px}}

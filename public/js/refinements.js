@@ -22,9 +22,11 @@ export function initRevisedCarousels(data){
  // local Z=-500, 36-degree spacing and the original parallax background position.
  const wrap=v=>((v%360)+360)%360;
  const render=()=>{ring.style.transform=`rotateY(${angle}deg)`;photos.forEach((photo,i)=>{photo.style.backgroundPosition=`${100-wrap(angle-180-i*36)/360*500}px 0px`;photo.tabIndex=Math.cos((angle-i*36)*Math.PI/180)>0?0:-1;});testimony.dataset.rotationAngle=angle.toFixed(2);};
+ const measure=()=>{const radius=innerWidth>800?$('.slider-container',testimony).clientWidth*5/3:500;testimony.style.setProperty('--testimony-radius',radius+'px');photos.forEach((photo,i)=>{photo.style.transformOrigin=`50% 50% ${radius}px`;photo.style.transform=`translateZ(${-radius}px) rotateY(${-i*36}deg)`;});};
+ const resize=new ResizeObserver(()=>{if(!stage.isConnected){resize.disconnect();return;}measure();});resize.observe(stage);
  photos.forEach((photo,i)=>{photo.style.backgroundImage=`url('/assets/testimony-${i+1}.webp')`;photo.style.transformOrigin='50% 50% 500px';photo.style.transform=`translateZ(-500px) rotateY(${-i*36}deg)`;});
  $$('[data-inward-step]',testimony).forEach(b=>b.addEventListener('click',()=>{direction=Number(b.dataset.inwardStep);angle+=direction*36;rotation.interacted(2500);render();}));
  stage.addEventListener('pointerdown',ev=>{if(ev.button!==0)return;drag={x:ev.clientX,y:ev.clientY,last:ev.clientX};suppress=false;rotation.interacted(0);});stage.addEventListener('pointermove',ev=>{if(!drag)return;const dx=ev.clientX-drag.x;if(Math.abs(dx)>7&&Math.abs(dx)>Math.abs(ev.clientY-drag.y)){suppress=true;stage.setPointerCapture(ev.pointerId);const delta=ev.clientX-drag.last;direction=delta<0?1:-1;angle-=delta*.25;drag.last=ev.clientX;render();}});const release=()=>{drag=null;rotation.interacted(1200);};stage.addEventListener('pointerup',release);stage.addEventListener('pointercancel',release);stage.addEventListener('click',ev=>{if(suppress){ev.preventDefault();ev.stopImmediatePropagation();suppress=false;}},true);stage.addEventListener('dragstart',ev=>ev.preventDefault());stage.addEventListener('keydown',ev=>{if(['ArrowLeft','ArrowRight'].includes(ev.key)){ev.preventDefault();angle+=(ev.key==='ArrowRight'?1:-1)*36;rotation.interacted(3500);render();}});
- render();rotation=autoRotate(testimony,{pauseOnPointerFocus:false,frame:dt=>{if(!drag){angle+=direction*12*dt;render();}}});
+ measure();render();rotation=autoRotate(testimony,{pauseOnPointerFocus:false,frame:dt=>{if(!drag){angle+=direction*12*dt;render();}}});
  }
 }
