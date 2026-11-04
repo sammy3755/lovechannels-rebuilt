@@ -1,4 +1,5 @@
 import {hsbToHex} from './hsb-palettes.js';
+import {fontStyles,applyFont} from './fonts.js';
 import {palettes,themeNames,applyPalette} from './palettes.js';
 export {themeNames} from './palettes.js';
 export const $ = (selector, root = document) => root.querySelector(selector);
@@ -45,12 +46,17 @@ export function eventDate(event) {
 }
 export const wingOptions = wings => [['','Choose a wing'], ...wings.map(w => [w.id,w.name])];
 export const empty = message => `<div class="empty-state"><span aria-hidden="true">✳</span><p>${e(message)}</p></div>`;
-export function themeButton() { return `<button class="theme-switch" data-theme-toggle aria-label="Choose colour palette" title="Choose from ${palettes.length} colour palettes"><span class="theme-orb" aria-hidden="true"></span><span class="theme-name">${themeNames[document.documentElement.dataset.theme]||'Ivory'}</span></button>`; }
+export function themeButton() { return `<button class="theme-switch" data-theme-toggle aria-label="Choose colours and fonts" title="Choose from ${palettes.length} colour palettes"><span class="theme-orb" aria-hidden="true"></span><span class="theme-name">${themeNames[document.documentElement.dataset.theme]||'Ivory'}</span></button>`; }
 export function brand(name = 'The Love Channels') { return `<a href="#/" class="brand" aria-label="${e(name)} home"><span class="brand-symbol" aria-hidden="true"><img class="brand-logo logo-blue" src="/assets/logo-blue.webp" alt="" width="44" height="40"><img class="brand-logo logo-white" src="/assets/logo-white.webp" alt="" width="44" height="40"></span><span>${e(name)}<small>CHRISTIAN CENTRE</small></span></a>`; }
 export function activateThemeButtons() {
  $$('[data-theme-toggle]').forEach(button=>button.addEventListener('click',()=>{
   const current=document.documentElement.dataset.theme;
-  modal('Find your atmosphere.',`<p>Explore ${palettes.length} coordinated palettes. Your choice follows you through the website and dashboards.</p><div class="lc-palette-filters" aria-label="Filter colour palettes">${[['all','All colours'],['bright','Bright colours'],['light','Light palettes'],['dark','Dark palettes']].map(([key,label])=>`<button data-palette-filter="${key}" aria-pressed="${key==='all'}">${label}</button>`).join('')}</div><div class="lc-palette-options"><div class="lc-theme-grid">${palettes.map((p,i)=>`<button class="lc-theme-choice" data-palette="${p.id}" data-palette-mode="${p.mode}" data-palette-bright="${Boolean(p.bright)}" aria-pressed="${current===p.id}"><span class="lc-theme-swatches" aria-hidden="true"><i></i><i></i><i></i>${i>=6?'<i></i>':''}</span><strong>${p.name}</strong><small>${p.colours}</small></button>`).join('')}</div></div>`);
+  modal('Colours & type.',`<section class="lc-font-picker" aria-label="Choose a font"><h3>Choose your font</h3><p>Preview it across the website and dashboards.</p><div class="lc-font-options">${fontStyles.map(f=>`<button data-font-choice="${f.id}" aria-pressed="${document.documentElement.dataset.font===f.id}"><strong>${f.name}</strong><small>${f.description}</small></button>`).join('')}</div></section><p>Explore ${palettes.length} coordinated palettes. Your choice follows you through the website and dashboards.</p><div class="lc-palette-filters" aria-label="Filter colour palettes">${[['all','All colours'],['bright','Bright colours'],['light','Light palettes'],['dark','Dark palettes']].map(([key,label])=>`<button data-palette-filter="${key}" aria-pressed="${key==='all'}">${label}</button>`).join('')}</div><div class="lc-palette-options"><div class="lc-theme-grid">${palettes.map((p,i)=>`<button class="lc-theme-choice" data-palette="${p.id}" data-palette-mode="${p.mode}" data-palette-bright="${Boolean(p.bright)}" aria-pressed="${current===p.id}"><span class="lc-theme-swatches" aria-hidden="true"><i></i><i></i><i></i>${i>=6?'<i></i>':''}</span><strong>${p.name}</strong><small>${p.colours}</small></button>`).join('')}</div></div>`);
+  $$('[data-font-choice]',$('#modal')).forEach(choice=>choice.addEventListener('click',()=>{
+   const font=choice.dataset.fontChoice;applyFont(font);try{localStorage.setItem('lc-font',font);}catch{}
+   const address=new URL(location.href);address.searchParams.set('font',font);history.replaceState(null,'',address);
+   $$('[data-font-choice]',$('#modal')).forEach(b=>b.setAttribute('aria-pressed',String(b===choice)));
+  }));
   $$('[data-palette]',$('#modal')).forEach(choice=>{const p=palettes.find(p=>p.id===choice.dataset.palette);if(p.hsbTokens){for(const [name,key] of [['canvas','canvas'],['ink','ink'],['gold','primary'],['accent','gold']])choice.style.setProperty('--preview-'+name,hsbToHex(p.hsbTokens[key]));}});
   $$('[data-palette-filter]',$('#modal')).forEach(filter=>filter.addEventListener('click',()=>{
    $$('[data-palette-filter]',$('#modal')).forEach(b=>b.setAttribute('aria-pressed',String(b===filter)));

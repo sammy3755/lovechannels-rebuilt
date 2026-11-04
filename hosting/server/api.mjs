@@ -194,7 +194,7 @@ export async function api(req, res, path, body) {
         assert(!date || Number.isFinite(Date.parse(date)), 'Enter a valid date.');
         assert(!body.end || (Number.isFinite(Date.parse(body.end)) && (!date || Date.parse(body.end) > Date.parse(date))), 'Event end must follow its start.');
         const events = (await getDoc('events'));
-        events.push({ id: randomUUID(), title, date: date ? new Date(date).toISOString() : '', location, description, image: (await imageField(body.image || 'service-sunday.webp')), recurring: false, published: body.published !== false, end: optional(body.end, 'Event end', 50) });
+        events.push({ id: randomUUID(), title, date: date ? new Date(date).toISOString() : '', location, description, image: (await imageField(body.image || 'service-sunday.webp')), registrationUrl: safeLink(body.registrationUrl||'', 'Registration URL'), recurring: false, published: body.published !== false, end: optional(body.end, 'Event end', 50) });
         (await setDoc('events', events));
         return send({ ok: true }, 201);
     }
@@ -215,7 +215,7 @@ export async function api(req, res, path, body) {
             event.published = body.published !== false;
             event.end = optional(body.end, 'Event end', 50);
             event.image = (await imageField(body.image || event.image));
-            event.recurring = false;
+            event.recurring = false; event.registrationUrl=safeLink(body.registrationUrl??event.registrationUrl??'','Registration URL');
         }
         const changed = events.find(x => x.id === eventMatch[1]);
         if (changed?.end) {

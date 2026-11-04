@@ -1,0 +1,21 @@
+.ac-hero-slide.is-active:not(.is-flyer):not(.is-film):nth-child(odd)>.ac-hero-art{animation-name:lc-photo-breathe}
+/* Photo movement is a continuous in/out cycle, independent of slide changes. */
+.ac-hero-slide.is-active:not(.is-flyer):not(.is-film)>.ac-hero-art{animation:lc-photo-breathe 8s ease-in-out infinite;transform-origin:center}
+@keyframes lc-photo-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+.lc-hero-collage{position:absolute;right:4%;top:12%;width:43%;height:72%;z-index:2;pointer-events:none}
+.lc-hero-collage img{position:absolute;object-fit:cover;box-shadow:0 16px 45px #0004;border:5px solid #fff;width:67%;height:57%;border-radius:4px;animation:lc-collage-breathe 7s ease-in-out infinite}
+.lc-hero-collage img:nth-child(1){right:0;top:0;transform:rotate(5deg);object-position:center}
+.lc-hero-collage img:nth-child(2){left:0;top:27%;width:62%;height:58%;transform:rotate(-6deg);animation-delay:-2s}
+.lc-hero-collage img:nth-child(3){right:0;bottom:0;width:53%;height:38%;transform:rotate(3deg);animation-delay:-4s}
+@keyframes lc-collage-breathe{0%,100%{scale:1;translate:0 0}50%{scale:1.06;translate:0 -7px}}
+.ac-hero-slide:first-child .ac-hero-art{opacity:.62}
+.ac-hero-slide:first-child .ac-hero-copy{max-width:47%;z-index:3}
+.ac-hero-slide.is-active .ac-hero-copy>p{animation:lc-intro-up .65s both}
+.ac-hero-slide.is-active .ac-hero-copy :is(h1,h2){animation:lc-intro-side .9s .12s both}
+.ac-hero-slide.is-active .ac-hero-copy>div{animation:lc-intro-up .8s .3s both}
+@keyframes lc-intro-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes lc-intro-side{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){.lc-reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}.lc-reveal[data-enter=left]{transform:translateX(-28px)}.lc-reveal[data-enter=right]{transform:translateX(28px)}.lc-reveal.is-revealed{opacity:1;transform:none}}
+.ac-wing-cube{transition:transform .55s cubic-bezier(.22,.8,.28,1)}
+@media(max-width:800px){.ac-hero-slide:first-child .ac-hero-copy{max-width:86%;top:6%}.lc-hero-collage{top:41%;left:7%;right:7%;width:86%;height:26%}.lc-hero-collage img{border-width:3px;width:47%;height:82%}.lc-hero-collage img:nth-child(1){right:0;top:0;width:48%;height:80%}.lc-hero-collage img:nth-child(2){left:0;top:5%;width:49%;height:87%}.lc-hero-collage img:nth-child(3){right:28%;bottom:-4%;width:36%;height:61%}.ac-hero-slide:first-child .ac-hero-copy>div{font-size:11px;line-height:1.65;margin-top:14px}}
+@media(prefers-reduced-motion:reduce){.ac-hero-slide.is-active:not(.is-flyer):not(.is-film)>.ac-hero-art,.lc-hero-collage img,.ac-hero-slide.is-active .ac-hero-copy :is(p,h1,h2,div){animation:none!important}.lc-reveal{opacity:1;transform:none}}

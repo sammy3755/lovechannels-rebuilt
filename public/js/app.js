@@ -1,4 +1,5 @@
 import {applyPalette} from './palettes.js';
+import {initFont} from './fonts.js';
 import {publicPages,initAnalytics} from './information.js';
 import { $, e, request, toast, activateThemeButtons, closeModal, themeNames } from './ui.js';
 import { renderSite, initSite } from './site.js';
@@ -9,11 +10,12 @@ import { renderAdmin, initAdmin } from './admin.js';
 import { disposeRotations } from './rotation.js';
 
 let user = null, renderId = 0;
-try { const saved=localStorage.getItem('lc-theme');document.documentElement.dataset.theme = Object.keys(themeNames).includes(saved) ? saved : 'light'; } catch {}
+try { const saved=localStorage.getItem('lc-theme');document.documentElement.dataset.theme = Object.keys(themeNames).includes(saved) ? saved : 'blue-white'; } catch {}
 if(new URLSearchParams(location.search).get('look')==='couture')document.documentElement.dataset.theme='dark';
 if(new URLSearchParams(location.search).get('look')==='ivory')document.documentElement.dataset.theme='light';
 const requestedTheme=new URLSearchParams(location.search).get('look');if(Object.hasOwn(themeNames,requestedTheme))document.documentElement.dataset.theme=requestedTheme;
 applyPalette(document.documentElement.dataset.theme);
+initFont();
 document.addEventListener('click', event => { if (event.target.closest('[data-close]')) closeModal(); });
 $('#modal').addEventListener('click', event => { if (event.target === $('#modal')) { const rect = $('#modal').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeModal(); } });
 

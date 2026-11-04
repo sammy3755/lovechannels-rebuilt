@@ -1,7 +1,7 @@
 export const settings = {
     churchName: 'The Love Channels',
     tagline: 'A place to belong. A life of purpose.',
-    heroTitle: 'Loved by God.\nMade for more.',
+    heroTitle: 'You’re 100%\nloved by God.',
     heroText: 'Discover a family where faith comes alive, love makes room, and your next chapter begins.',
     vision: 'Raising world changers through the preaching of the Gospel of Christ and a community-driven approach.',
     address: 'Plot 175 Ada George Road, Port Harcourt',

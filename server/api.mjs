@@ -148,7 +148,7 @@ export async function api(req, res, path, body) {
   if (path === '/api/admin/events' && method === 'POST') {
     const title = field(body.title, 'Event title', 160), date = optional(body.date, 'Date', 50), location = field(body.location, 'Location', 250), description = field(body.description, 'Description', 2000);
     assert(!date||Number.isFinite(Date.parse(date)), 'Enter a valid date.');assert(!body.end||(Number.isFinite(Date.parse(body.end))&&(!date||Date.parse(body.end)>Date.parse(date))),'Event end must follow its start.');
-    const events = getDoc('events'); events.push({ id: randomUUID(), title, date:date?new Date(date).toISOString():'', location, description, image: imageField(body.image || 'service-sunday.webp'), recurring: false,published:body.published!==false,end:optional(body.end,'Event end',50) });
+    const events = getDoc('events'); events.push({ id: randomUUID(), title, date:date?new Date(date).toISOString():'', location, description, image: imageField(body.image || 'service-sunday.webp'), registrationUrl:safeLink(body.registrationUrl||'','Registration URL'),recurring: false,published:body.published!==false,end:optional(body.end,'Event end',50) });
     setDoc('events', events); return send({ ok: true }, 201);
   }
   const eventMatch = path.match(/^\/api\/admin\/events\/([\w-]+)$/);
@@ -159,7 +159,7 @@ export async function api(req, res, path, body) {
       const event = events[index];
       for (const key of ['title','location','description']) event[key] = field(body[key], key, key === 'description' ? 2000 : 250);
       assert(!body.date||Number.isFinite(Date.parse(body.date)), 'Enter a valid date.'); event.date=body.date?new Date(body.date).toISOString():'';event.published=body.published!==false;event.end=optional(body.end,'Event end',50);
-      event.image = imageField(body.image || event.image); event.recurring = false;
+      event.image = imageField(body.image || event.image); event.recurring = false; event.registrationUrl=safeLink(body.registrationUrl??event.registrationUrl??'','Registration URL');
     }
     const changed=events.find(x=>x.id===eventMatch[1]);if(changed?.end){assert(Number.isFinite(Date.parse(changed.end))&&(!changed.date||Date.parse(changed.end)>Date.parse(changed.date)),'Event end must follow its start.');}
     setDoc('events', events); return send({ ok: true });

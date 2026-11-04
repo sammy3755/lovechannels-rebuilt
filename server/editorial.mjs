@@ -1,3 +1,4 @@
+import {inspireConference} from '../public/js/inspire.js';
 import {originalCentres} from './centres.mjs';
 import {db,getDoc,setDoc} from './db.mjs';
 import {assert,requireUser,textField as field,safeLink,emailField} from './auth.mjs';
@@ -59,3 +60,6 @@ export async function editorialApi(req,path,body){
  }
  content[collection]=list;setDoc('editorial',content);return {ok:true};
 }
+
+// Add this announced conference once; later admin edits and deletion remain authoritative.
+if(!db.prepare('SELECT key FROM documents WHERE key=?').get('inspire-conference-v1')){const events=getDoc('events');if(!events.some(e=>e.id===inspireConference.id))events.push(inspireConference);setDoc('events',events);setDoc('inspire-conference-v1',true);}

@@ -1,6 +1,7 @@
 import {hsbPalettes,hsbToHex} from './hsb-palettes.js';
 // Shared palette catalogue for the header, chooser, saved preferences and URL previews.
 export const palettes=[
+ ...hsbPalettes.filter(p=>p.fresh).map(p=>({...p,canvas:hsbToHex(p.hsbTokens.canvas)})),
  {id:'light',name:'Ivory',mode:'light',colours:'Warm ivory · olive ash · muted gold',canvas:'#eeeae1'},
  {id:'dark',name:'Noir',mode:'dark',colours:'Soft charcoal · warm white · gold',canvas:'#151715'},
  {id:'forest',name:'Forest',mode:'light',colours:'Pale sage · forest green · antique gold',canvas:'#e9ede5'},
@@ -29,7 +30,7 @@ export const palettes=[
  {id:'spring',name:'Spring Green',mode:'light',bright:true,colours:'Fresh lime · leafy green · white',canvas:'#e0f5c6'},
  {id:'lemon-pop',name:'Lemon Pop',mode:'light',bright:true,colours:'Bright lemon · electric blue · white',canvas:'#eaffbb'},
  {id:'tangerine',name:'Tangerine',mode:'light',bright:true,colours:'Apricot · bold orange · porcelain white',canvas:'#ffeadf'},
- ...hsbPalettes.map(p=>({...p,canvas:hsbToHex(p.hsbTokens.canvas)}))
+ ...hsbPalettes.filter(p=>!p.fresh).map(p=>({...p,canvas:hsbToHex(p.hsbTokens.canvas)}))
 ];
 export const themeNames=Object.fromEntries(palettes.map(p=>[p.id,p.name]));
 export function applyPalette(id){
@@ -39,6 +40,8 @@ export function applyPalette(id){
  document.documentElement.style.colorScheme=palette.mode;
  document.documentElement.dataset.theme=id;
  document.documentElement.dataset.colourMode=palette.mode;
+ if(palette.fresh)document.documentElement.dataset.paletteFamily='daylight';
+ else delete document.documentElement.dataset.paletteFamily;
  document.querySelector('meta[name="theme-color"]').content=palette.canvas;
  document.querySelectorAll('.theme-name').forEach(n=>n.textContent=palette.name);
 }
