@@ -1,0 +1,24 @@
+{
+  "name": "lovechannels",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The Love Channels — church website and community portal",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node server/index.mjs --demo",
+    "test": "node --test tests/*.test.mjs",
+    "test:hosting": "node --test --test-concurrency=1 hosting/tests/*.test.mjs",
+    "start:hosting": "node hosting/dev.mjs"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.15",
+    "typescript": "5.9.3"
+  }
+}

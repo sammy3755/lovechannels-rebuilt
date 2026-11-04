@@ -1,0 +1,78 @@
+import {memberGrowthView,initGrowthPortal,memberPaymentLinks} from './growth-portal.js';
+import {mediaSection,podcastsSection,initExperience} from './experience.js';
+import { $, $$, e, arrow, field, selectField, submit, handleForm, request, modal, closeModal, toast, empty, wingOptions, dateFormat, eventDate } from './ui.js';
+import { portalShell } from './portal.js';
+import { memberWorkflowView,initMemberWorkflows } from './member-workflows.js';
+
+const stages = ['New connection','Growing in faith','Foundation class','Baptised','Discipling others'];
+const initials = name => name.split(' ').map(s => s[0]).slice(0,2).join('');
+const dateTile = date => `<span class="date-tile"><strong>${dateFormat(date,{day:'2-digit',month:undefined})}</strong>${dateFormat(date,{day:undefined,month:'short'})}</span>`;
+const titleFor = { overview: 'Welcome home', wings: 'Your people. Your place.', events: 'Make room for community.', souls: 'One soul. Generations of faith.', prayers: 'You never walk alone.', profile: 'A little more about you.', media:'Watch. Listen. Grow.' };
+
+function renderTree(souls, user) {
+  function branches(parent, depth = 0) {
+    if (depth > 100) return '';
+    return souls.filter(s => s.parent === parent).map(soul => {
+      const children = souls.some(s => s.parent === soul.id);
+      return `<li><div class="pyramid-node soul-node">${children ? `<button class="icon-button" data-collapse aria-label="Collapse descendants of ${e(soul.name)}" aria-expanded="true">−</button>` : ''}<span class="avatar">${e(initials(soul.name))}</span><div><strong>${e(soul.name)}</strong><small>${soul.followup ? `Follow up: ${e(soul.followup)}` : 'Keep walking alongside them'}</small></div><span class="badge">${e(soul.status)}</span><button class="icon-button" data-edit-soul="${soul.id}" aria-label="Edit ${e(soul.name)}">✎</button></div>${children ? `<ul>${branches(soul.id,depth+1)}</ul>` : ''}</li>`;
+    }).join('');
+  }
+  return `<div class="pyramid-viewport" role="region" aria-label="Your discipleship pyramid" tabindex="0"><ul class="pyramid-tree"><li><div class="pyramid-node soul-node root-node"><span class="avatar">${e(initials(user.name))}</span><div><strong>${e(user.name)}</strong><small>Your discipleship family · ${souls.length} connections</small></div></div><ul>${branches(null)}</ul></li></ul></div>`;
+}
+export function renderMember(data, member, tab) {
+  const { user, souls, prayers, rsvps } = member;
+  const wing = data.wings.find(w => w.id === user.wing);
+  const events = data.events.slice().sort((a,b) => eventDate(a)-eventDate(b));
+  let content = '';
+  if (tab === 'overview') content = `<div class="welcome-card"><p class="eyebrow">A family for every season</p><h2>You are loved, ${e(user.name.split(' ')[0])}.<br>And there is more ahead.</h2><p>${e(data.settings.vision)}</p><a class="text-link" href="#/member/souls">Grow your discipleship family ${arrow}</a></div><div class="stats-grid"><div class="stat-card"><span>My discipleship family</span><strong>${souls.length}</strong><small>People to walk alongside</small></div><div class="stat-card"><span>My wing</span><strong>${wing ? '01' : '—'}</strong><small>${e(wing?.name || 'Find your community')}</small></div><div class="stat-card"><span>Saved gatherings</span><strong>${rsvps.length}</strong><small>See you there</small></div></div><div class="dashboard-grid"><section class="panel"><div class="panel-heading"><h2>Coming up</h2><a href="#/member/events">View calendar ↗</a></div>${events.slice(0,3).map(event => `<div class="mini-event">${dateTile(eventDate(event))}<div><h3>${e(event.title)}</h3><p>${dateFormat(eventDate(event),{weekday:'short',hour:'numeric',minute:'2-digit'})} WAT</p></div></div>`).join('') || empty('New gatherings will appear here.')}</section><div><section class="panel"><div class="panel-heading"><h2>Stay connected</h2></div><div class="quick-actions"><a href="#/member/wings">${e(wing?.name || 'Find your wing')}<span>↗</span></a><a href="#/member/prayers">Share a prayer request<span>↗</span></a><a href="#/member/profile">Complete your profile<span>↗</span></a><a href="${e(data.settings.livestream)}" target="_blank" rel="noopener noreferrer">Worship online<span>↗</span></a></div></section><p class="form-note">Church notice: ${e(data.settings.announcement)}</p></div></div>`;
+  if (tab === 'wings') content = `<div class="portal-wing-grid">${data.wings.map(w => `<article class="panel portal-wing"><img src="/assets/${e(w.image)}" alt="${e(w.name)} members" width="700" height="300"><div class="wing-details">${w.id === user.wing ? '<span class="badge">MY WING</span>' : '<span class="eyebrow">A place to grow</span>'}<h2>${e(w.name)}</h2><p>${e(w.description)}</p><dl class="detail-list"><div><dt>Wing leader</dt><dd>${e(w.leader || 'Contact church office')}</dd></div><div><dt>Location</dt><dd>${e(w.location)}</dd></div><div><dt>Contact</dt><dd>${w.contact ? `<a href="tel:${e(w.contact)}">${e(w.contact)}</a>` : `<a href="tel:${e(data.settings.phone)}">Church office · ${e(data.settings.phone)}</a>`}</dd></div></dl>${w.whatsapp ? `<a class="button small" href="${e(w.whatsapp)}" target="_blank" rel="noopener noreferrer">Join WhatsApp group ${arrow}</a>` : `<a class="button small outline" href="${e(data.settings.whatsapp)}" target="_blank" rel="noopener noreferrer">Connect through church office ${arrow}</a>`}${w.id !== user.wing ? `<p><button class="text-link" data-join-wing="${e(w.id)}">Set as my wing ${arrow}</button></p>` : ''}</div></article>`).join('')}</div>`;
+  if (tab === 'events') content = events.map(event => { const date = eventDate(event); return `<article class="panel portal-event"><img src="/assets/${e(event.image)}" alt="" width="150" height="120"><div><span class="badge">${event.recurring ? 'Weekly gathering' : 'Church event'}</span><h2>${e(event.title)}</h2><p>${event.date?dateFormat(date,{weekday:'long',year:'numeric',hour:'numeric',minute:'2-digit'})+' WAT':'Date to be announced'}</p><p>${e(event.location)}</p><p>${e(event.description)}</p></div><div class="event-actions"><button class="button small ${rsvps.includes(event.id) ? 'outline' : ''}" data-rsvp="${e(event.id)}">${rsvps.includes(event.id) ? '✓ Attending · Cancel' : "I'll be there ↗"}</button><button class="button small outline" data-calendar="${e(event.id)}" ${!event.date?'disabled':''}>Add to calendar</button></div></article>`; }).join('') || empty('There are no upcoming events yet.');
+  if (tab === 'souls') content = `<div class="stats-grid"><div class="stat-card"><span>People in your tree</span><strong>${souls.length}</strong><small>Every soul matters</small></div><div class="stat-card"><span>Multiplying connections</span><strong>${souls.filter(s => souls.some(child => child.parent === s.id)).length}</strong><small>Disciples making disciples</small></div><div class="stat-card"><span>Follow-ups planned</span><strong>${souls.filter(s => s.followup).length}</strong><small>Keep the connection growing</small></div></div><section class="panel"><div class="tree-toolbar"><p>Add a connection under yourself or someone in your tree. Expand each branch to see the next generation. Keep notes limited to what is needed for follow-up, with the person's consent.</p><button class="button small" data-add-soul>Add a connection +</button></div>${renderTree(souls,user)}</section>`;
+  if (tab === 'prayers') content = `<div class="dashboard-grid"><section class="panel"><h2>Let us pray with you.</h2><form id="prayer-form">${field('What is on your heart?','message','','textarea',true,'maxlength="3000"')}<p class="form-note">Only you and church administrators can view this request.</p>${submit('Share my prayer request')}</form></section><section class="panel"><h2>Your prayer journey</h2>${prayers.map(prayer => `<article class="prayer-row"><p>${e(prayer.message)}</p><div class="prayer-meta"><time>${dateFormat(prayer.created + 'Z',{year:'numeric'})}</time><span class="badge">${e(prayer.status)}</span></div></article>`).join('') || empty('Your prayer requests and updates will appear here.')}</section></div>`;
+  if (tab === 'profile') content = `<div class="dashboard-grid"><section class="panel"><h2>Your member profile</h2><form id="profile-form">${field('Full name','name',user.name,'text',true,'maxlength="100" autocomplete="name"')}<div class="form-grid">${field('Phone / WhatsApp','phone',user.phone,'tel',false,'maxlength="40" autocomplete="tel"')}${field('Location','location',user.location,'text',false,'maxlength="200"')}</div>${selectField('My wing','wing',wingOptions(data.wings),user.wing)}<p class="form-note">Account email: ${e(user.email)}. Contact church administration if your email needs to change.</p>${submit()}</form></section><div><section class="panel"><h2>Account security</h2><form id="password-form">${field('Current password','currentPassword','','password',true,'autocomplete="current-password"')}${field('New password','password','','password',true,'minlength="12" maxlength="256" autocomplete="new-password"')}<p class="form-note">Use at least 12 characters. Changing your password signs out your other sessions.</p>${submit('Change password')}</form></section><p class="form-note">Need pastoral care or help with your account? <a href="mailto:${e(data.settings.email)}">${e(data.settings.email)}</a></p></div></div>`;
+  if(tab==='media')content=mediaSection(data,true)+podcastsSection(data,true);
+  const workflow=memberWorkflowView(data,member,tab);
+  if(workflow)content=workflow.content;
+  const extension=memberGrowthView(data,member,tab);if(extension)content=extension.content;
+  if(tab==='giving')content=memberPaymentLinks(data)+content;
+  if(tab==='library'&&data.growth.paymentReady)content+=`<section class="panel"><h2>Pay for books online.</h2>${data.resources.filter(r=>r.type==='book'&&r.price_kobo>0).map(r=>`<p>${e(r.title)} <button class="button small" data-pay-book="${r.id}">Buy with Paystack ↗</button></p>`).join('')}</section>`;
+  if(tab==='overview')content=`<div class="dashboard-launchpad"><a href="#/member/bookings"><span>✳</span>Bookings & classes ↗</a><a href="#/member/testimonies"><span>✧</span>Share a testimony ↗</a><a href="#/member/giving"><span>♡</span>Giving & donations ↗</a><a href="#/member/library"><span>▤</span>Books & messages ↗</a></div>`+content;
+  return portalShell({ user, tab, admin: false, data, title: extension?.title || workflow?.title || (tab === 'overview' ? `Welcome home, ${user.name.split(' ')[0]}.` : titleFor[tab]), subtitle: 'Your faith journey, connected.', content,action:workflow?.action||'' });
+}
+
+export function initMember(data, member, reload) {
+  initGrowthPortal(data,member,reload);initMemberWorkflows(data,member,reload);initExperience(data);
+  const requestedType=new URLSearchParams(location.hash.split('?')[1]||'').get('type');if(requestedType){const option=$$('[data-booking]').find(button=>button.dataset.booking===requestedType);if(option){history.replaceState(null,'',location.href.split('?type=')[0]);option.click();}}
+  const { user, souls, rsvps } = member;
+  const profile = $('#profile-form');
+  if (profile) handleForm(profile, async values => { await request('/profile',values,'PUT'); toast('Your profile has been updated.'); await reload(); });
+  const password = $('#password-form');
+  if (password) handleForm(password, async values => { await request('/password',values,'PUT'); password.reset(); toast('Your password has been changed.'); });
+  const prayer = $('#prayer-form');
+  if (prayer) handleForm(prayer, async values => { await request('/prayers',values); toast('Your request has been shared with the care team.'); await reload(); });
+  $$('[data-join-wing]').forEach(button => button.addEventListener('click', async () => { try { await request('/profile',{ ...user, wing:button.dataset.joinWing },'PUT'); toast('Your wing has been updated.'); await reload(); } catch (err) { toast(err.message); } }));
+  $$('[data-rsvp]').forEach(button => button.addEventListener('click', async () => {
+    button.disabled = true;
+    try { const event = button.dataset.rsvp; await request('/rsvp',{ event, attending: !rsvps.includes(event) }); toast(rsvps.includes(event) ? 'Your RSVP has been cancelled.' : 'You are on the list. See you there!'); await reload(); }
+    catch (err) { toast(err.message); button.disabled = false; }
+  }));
+  $$('[data-calendar]').forEach(button => button.addEventListener('click', () => {
+    const event = data.events.find(e => e.id === button.dataset.calendar), date = eventDate(event);
+    const stamp = d => d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+    const icsEscape = value => String(value).replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\r/g,'');
+    const content = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//The Love Channels//Community//EN','BEGIN:VEVENT',`UID:${event.id}@thelovechannels.local`,`DTSTAMP:${stamp(new Date())}`,`DTSTART:${stamp(date)}`,`DTEND:${stamp(new Date(date.getTime()+7200000))}`,`SUMMARY:${icsEscape(event.title)}`,`LOCATION:${icsEscape(event.location)}`,`DESCRIPTION:${icsEscape(event.description)}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+    const url = URL.createObjectURL(new Blob([content],{type:'text/calendar;charset=utf-8'}));
+    const a = document.createElement('a'); a.href = url; a.download = 'lovechannels-gathering.ics'; a.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
+  }));
+  function editSoul(soul) {
+    modal(soul ? `Walk alongside ${soul.name}.` : 'Every story starts with one.', `<form id="soul-form">${field('Name','name',soul?.name || '','text',true,'maxlength="100"')}${field('Phone (optional, with consent)','phone',soul?.phone || '','tel',false,'maxlength="40"')}${soul ? '' : selectField('Connected through','parent',[['','Me — start a new branch'],...souls.map(s => [s.id,s.name])])}${selectField('Discipleship stage','status',stages.map(s => [s,s]),soul?.status || stages[0])}${field('Next follow-up','followup',soul?.followup || '','date')}${field('Follow-up notes','notes',soul?.notes || '','textarea',false,'maxlength="2000"')}${submit(soul ? 'Save progress' : 'Add to my tree')}${soul ? '<p><button type="button" class="text-link danger" data-delete-soul>Remove this connection</button></p>' : ''}</form>`);
+    handleForm($('#soul-form'), async values => { await request(soul ? `/souls/${soul.id}` : '/souls',values,soul ? 'PUT' : 'POST'); closeModal(); toast(soul ? 'Progress saved.' : 'Your discipleship family is growing.'); await reload(); });
+    $('[data-delete-soul]')?.addEventListener('click', () => {
+      modal('Remove this connection?', `<p>${e(soul.name)} will be removed. Their descendants will stay in your tree under the previous parent.</p><form id="delete-soul-form">${submit('Remove connection')}</form>`);
+      handleForm($('#delete-soul-form'), async () => { await request(`/souls/${soul.id}`,{},'DELETE'); closeModal(); toast('Connection removed. Descendants were preserved.'); await reload(); });
+    });
+  }
+  $('[data-add-soul]')?.addEventListener('click', () => editSoul());
+  $$('[data-collapse]').forEach(button=>button.addEventListener('click',()=>{const children=button.closest('li').querySelector(':scope > ul');if(!children)return;children.hidden=!children.hidden;button.closest('li').dataset.collapsed=String(children.hidden);button.setAttribute('aria-expanded',String(!children.hidden));button.textContent=children.hidden?'+':'−';}));
+  $$('[data-edit-soul]').forEach(button => button.addEventListener('click', () => editSoul(souls.find(s => s.id === Number(button.dataset.editSoul)))));
+}

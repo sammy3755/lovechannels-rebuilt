@@ -1,0 +1,242 @@
+/* Geometry and reflection styles retained from the original church project. */
+/* ==========================================
+   3D Ring Carousel - Exact Copy with Refactored Variables
+   ========================================== */
+
+.ring3d-carousel-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 600px;
+    margin-top: -15rem;
+    margin-bottom: -10rem;
+}
+
+.ring3d-carousel {
+    --_diameter: 50rem;
+    --_radius: calc(var(--_diameter) / 2);
+    --_item-width: 11.5rem;
+    --_item-height: 17.5rem;
+    perspective: 1000px;
+    perspective-origin: 50% 20%;
+    width: var(--_diameter);
+    height: var(--_diameter);
+}
+
+/* Pause on hover - directly on carousel */
+.ring3d-carousel:hover .ring3d-item-wrapper,
+.ring3d-carousel:hover .ring3d-rotation-direction {
+    animation-play-state: paused;
+}
+
+/* Pause when hovering the ITEM itself (like original) */
+.ring3d-carousel .ring3d-rotation-direction:has(.ring3d-item:hover) ~ .ring3d-item-wrapper,
+.ring3d-carousel:has(.ring3d-item:hover) .ring3d-item-wrapper,
+.ring3d-carousel:has(.ring3d-item:hover) .ring3d-rotation-direction {
+    animation-play-state: paused;
+}
+
+@media only screen and (max-width: 48rem) {
+    .ring3d-carousel {
+        --_diameter: calc(50rem * 0.75);
+        --_item-width: calc(11.5rem * 0.75);
+        --_item-height: calc(17.5rem * 0.75);
+    }
+}
+
+@media only screen and (max-width: 32rem) {
+    .ring3d-carousel-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ring3d-carousel {
+        --_diameter: calc(50rem * 0.6);
+        --_item-width: calc(11.5rem * 0.6);
+        --_item-height: calc(17.5rem * 0.6);
+    }
+}
+
+@media only screen and (max-width: 16rem) {
+    .ring3d-carousel-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ring3d-carousel {
+        --_diameter: calc(50rem * 0.25);
+        --_item-width: calc(11.5rem * 0.25);
+        --_item-height: calc(17.5rem * 0.25);
+    }
+}
+
+.ring3d-carousel .ring3d-control-button {
+    --_width: 1.25rem;
+    --_height: 4rem;
+    z-index: 1;
+    width: var(--_width);
+    height: var(--_height);
+    background-color: rgb(255, 255, 255);
+    opacity: 0.2;
+    transition: opacity 250ms ease-out;
+    position: absolute;
+}
+
+.ring3d-carousel .ring3d-control-button:hover {
+    opacity: 0.4;
+}
+
+.ring3d-carousel .ring3d-control-button:has(input:checked) {
+    opacity: 0.8;
+}
+
+.ring3d-carousel .ring3d-control-button input {
+    -webkit-appearance: none;
+    appearance: none;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.ring3d-carousel .ring3d-control-button.left {
+    clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
+    top: calc(var(--_radius) - var(--_height) / 2);
+    left: 0;
+}
+
+.ring3d-carousel:has(.ring3d-control-button.left input:checked) {
+    --ring3d-direction-animation-play-state: running;
+}
+
+.ring3d-carousel .ring3d-control-button.right {
+    clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+    top: calc(var(--_radius) - var(--_height) / 2);
+    right: 0;
+}
+
+.ring3d-carousel:has(.ring3d-control-button.right input:checked) {
+    --ring3d-direction-animation-play-state: paused;
+}
+
+.ring3d-carousel .ring3d-rotation-direction {
+    --_direction-animation-play-state: var(--ring3d-direction-animation-play-state, running);
+    --_z: calc(var(--_radius) * -1);
+    transform: translateZ(var(--_z));
+    transform-style: preserve-3d;
+    animation: ring3d-rotation-reverse 12.5s reverse linear infinite var(--_direction-animation-play-state);
+    transition: all 250ms ease-out;
+}
+
+.ring3d-carousel:has(.ring3d-item:hover) .ring3d-rotation-direction {
+    animation-play-state: paused;
+}
+
+@keyframes ring3d-rotation-reverse {
+    from {
+        transform: translateZ(var(--_z)) rotateY(0deg);
+    }
+    to {
+        transform: translateZ(var(--_z)) rotateY(360deg);
+    }
+}
+
+@keyframes ring3d-rotation-normal {
+    from {
+        transform: rotateY(0deg);
+    }
+    to {
+        transform: rotateY(360deg);
+    }
+}
+
+.ring3d-carousel .ring3d-item-wrapper {
+    transform-style: inherit;
+    width: inherit;
+    height: inherit;
+    list-style-type: none;
+    position: relative;
+    animation: ring3d-rotation-normal 25s normal linear infinite var(--ring3d-animation-play-state, running);
+    transition: all 250ms ease-out;
+}
+
+.ring3d-carousel .ring3d-rotation-direction:has(.ring3d-item:hover) {
+    --ring3d-animation-play-state: paused;
+}
+
+.ring3d-carousel .ring3d-item {
+    --_width: var(--_item-width);
+    --_height: var(--_item-height);
+    --_rotation: calc(360 / var(--_num-elements) * var(--_index) * 1deg);
+    left: calc(var(--_radius) - var(--_item-width) / 2);
+    top: calc(var(--_radius) - var(--_item-height) / 2);
+    transform: rotateY(var(--_rotation)) translateZ(var(--_radius));
+    transform-style: inherit;
+    width: var(--_width);
+    height: var(--_height);
+    transition: all 250ms ease-out;
+    box-shadow: 0 0 5rem transparent;
+    position: absolute;
+}
+
+.ring3d-carousel .ring3d-item:hover {
+    box-shadow: 0 0 5rem rgb(255, 255, 255);
+    transform: rotateY(var(--_rotation)) translateZ(calc(var(--_radius) * 1.075));
+}
+
+.ring3d-carousel .ring3d-item .ring3d-photo {
+    display: block;
+    width: inherit;
+    height: inherit;
+    text-indent: -9999px;
+    background-color: rgba(255, 255, 255, 0.5);
+    background-image: var(--_image-url);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    transition: filter 250ms ease-out;
+}
+
+.ring3d-carousel .ring3d-item::before {
+    content: '';
+    width: inherit;
+    height: inherit;
+    background-color: rgba(255, 255, 255, 0.5);
+    background-image:
+        linear-gradient(to top, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 1.0) 75%),
+        var(--_image-url);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    pointer-events: none;
+    filter: blur(0.25rem);
+    transition: filter 250ms ease-out;
+    transform-style: inherit;
+    transform-origin: center bottom;
+    transform: rotateX(90deg) rotateZ(180deg) rotateY(180deg);
+    position: absolute;
+}
+
+.ring3d-carousel .ring3d-item:hover::before {
+    filter: blur(0.25rem);
+}
+
+.ring3d-carousel .ring3d-ground {
+    --_width: var(--_diameter);
+    --_height: var(--_diameter);
+    --_rotation: 90deg;
+    left: calc(var(--_radius) - var(--_width) / 2);
+    top: calc(var(--_radius) - var(--_height) / 2);
+    transform: rotateX(var(--_rotation)) translateZ(calc(var(--_item-height) / -2));
+    width: var(--_width);
+    height: var(--_height);
+    border-radius: 50%;
+    background: radial-gradient(rgba(128, 128, 128, 0.75) 15%, rgba(0, 0, 0, 0) 60%);
+    opacity: 0.5;
+    transition: opacity 250ms ease-out;
+    position: absolute;
+}
+
+.ring3d-carousel .ring3d-item-wrapper:has(.ring3d-item:hover) .ring3d-ground {
+    opacity: 0.75;
+}

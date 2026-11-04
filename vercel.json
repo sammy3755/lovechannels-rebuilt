@@ -1,0 +1,22 @@
+{
+  "framework": null,
+  "outputDirectory": "public",
+  "installCommand": "npm ci",
+  "functions": {
+    "api/index.mjs": {"maxDuration": 60, "includeFiles": "public/assets/**"}
+  },
+  "rewrites": [
+    {"source": "/assets/uploads/:path*", "destination": "/api/index?asset=uploads/:path*"},
+    {"source": "/api/:path*", "destination": "/api/index?route=/api/:path*"},
+    {"source": "/member", "destination": "/index.html"},
+    {"source": "/admin", "destination": "/index.html"}
+  ],
+  "headers": [
+    {"source": "/(.*)", "headers": [
+      {"key":"X-Content-Type-Options","value":"nosniff"},
+      {"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},
+      {"key":"X-Frame-Options","value":"DENY"},
+      {"key":"Content-Security-Policy","value":"default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.instagram.com https://open.spotify.com; media-src 'self' https:; frame-ancestors 'none'; form-action 'self'; base-uri 'self'"}
+    ]}
+  ]
+}
