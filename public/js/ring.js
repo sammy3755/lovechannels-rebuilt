@@ -30,5 +30,5 @@ export function initRing(root){
  stage.addEventListener('pointerup',release);stage.addEventListener('pointercancel',release);stage.addEventListener('lostpointercapture',release);
  if(cards.length===1){root.querySelectorAll('.ac-deck-controls button').forEach(button=>button.disabled=true);root.dataset.rotationState='paused';return;}
  root.querySelectorAll('.ac-card-cta').forEach(button=>button.addEventListener('pointerenter',()=>rotation.interacted(3500)));
- rotation=autoRotate(root,{visibilityTarget:stage,interactionDelay:3500,pauseOnPointerFocus:false,pauseOnHover:false,frame:dt=>{if(!drag){ring.classList.remove('is-stepping');angle-=(root.id==='events'?6:14)*dt;render();}}});
+ rotation=autoRotate(root,{visibilityTarget:stage,interactionDelay:3500,pauseOnPointerFocus:false,pauseOnHover:true,frame:dt=>{if(!drag){ring.classList.remove('is-stepping');angle-=3*dt;render();}}});
 }

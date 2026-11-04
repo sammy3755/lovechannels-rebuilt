@@ -48,3 +48,12 @@ Automated checks cover access control, record isolation, unsafe input, OAuth cla
 validation/replay/account linking, rate limits, uploads and payment settlement.
 These controls reduce risk; they are not a guarantee against every future attack.
 Keep dependencies patched, restrict platform access, and review logs and backups.
+
+## Session duration
+
+Member and administrator sessions have a fixed 24-hour lifetime from sign-in.
+Activity does not extend it, and there is no separate inactivity timeout.
+After expiry the next protected action requires sign-in again. Logout revokes
+the current session immediately; a password change revokes other sessions.
+Removing public administrator links is a navigation change: API role checks
+remain the access boundary for administration.
