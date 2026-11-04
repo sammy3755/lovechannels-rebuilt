@@ -24,16 +24,16 @@ export async function handleHostedAPI(req,res){
    if(!req.headers['content-type']?.startsWith('application/json'))throw new HttpError(415,'Use application/json.');
    const chunks=[];let size=0;for await(const chunk of req){size+=Buffer.byteLength(chunk);if(size>(path==='/api/admin/uploads'?4200000:65536))throw new HttpError(413,'Request is too large.');chunks.push(Buffer.from(chunk));}
    req.rawBody=Buffer.concat(chunks).toString('utf8');
-   try{body=req.rawBody?JSON.parse(req.rawBody):{};}catch{throw new HttpError(400,'Invalid JSON.');}
+   try{body=req.rawBody?JSON.parse(req.rawBody,(key,value)=>{if(['__proto__','constructor','prototype'].includes(key))throw Error('Invalid key');return value;}):{};}catch{throw new HttpError(400,'Invalid JSON.');}
    if(!body||typeof body!=='object'||Array.isArray(body))throw new HttpError(400,'Expected a JSON object.');
   }
   // Commit before exposing success or a new session cookie to the browser.
-  const buffered={status:200,headers:{},payload:undefined,setHeader(k,v){this.headers[k]=v;},writeHead(s,h){this.status=s;Object.assign(this.headers,h);},end(value){this.payload=value;}};
+  const buffered={status:200,headers:{},payload:undefined,setHeader(k,v){this.headers[k]=v;},getHeader(k){return this.headers[k];},writeHead(s,h){this.status=s;Object.assign(this.headers,h);},end(value){this.payload=value;}};
   await withDatabase(()=>api(req,buffered,path,body));
   res.writeHead(buffered.status,{'X-Content-Type-Options':'nosniff',...buffered.headers});res.end(buffered.payload);
  }catch(error){
   if(!error.status)console.error('Hosted API error:',error.code||error.name,error.message);
-  res.writeHead(error.status||500,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
+  res.writeHead(error.status||500,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...(error.status===429?{'Retry-After':'600'}:{})});
   res.end(JSON.stringify({error:error.status?error.message:'Something went wrong. Please try again.'}));
  }
 }

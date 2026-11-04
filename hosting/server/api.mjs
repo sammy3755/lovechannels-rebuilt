@@ -1,9 +1,11 @@
+import {dummyPassword} from './passwords.mjs';
+import {googleApi,googleEnabled} from './google.mjs';
 import { publicGrowth, memberGrowth, adminGrowth, growthApi } from './growth.mjs';
 import { paymentApi, adminPayments } from './payments.mjs';
 import { editorialApi, publicEditorial, publicEvents, asset, assets } from './editorial.mjs';
 import { randomUUID } from 'node:crypto';
-import { db, demoMode, getDoc, setDoc, hashPassword, publicUser } from './db.mjs';
-import { assert, HttpError, currentUser, requireUser, startSession, endSession, validPassword, rateLimit, textField as field, emailField, safeLink } from './auth.mjs';
+import { db, getDoc, setDoc, hashPassword, publicUser } from './db.mjs';
+import { assert, HttpError, currentUser, requireUser, startSession, endSession, validPassword, rateLimit, textField as field, emailField, safeLink, passwordField } from './auth.mjs';
 import { publicCommunity, memberCommunity, adminCommunity } from './community.mjs';
 import { communityApi } from './community-api.mjs';
 const statuses = ['New connection', 'Growing in faith', 'Foundation class', 'Baptised', 'Discipling others'];
@@ -12,13 +14,18 @@ const optional = (value, label, max = 500) => field(value ?? '', label, max, fal
 const imageField = asset;
 export async function api(req, res, path, body) {
     const method = req.method;
+ if(path==='/api/demo')throw new HttpError(404,'Endpoint not found.');
+ await rateLimit(req,'api-total',1200);
+ if(!['GET','HEAD'].includes(method))await rateLimit(req,'api-write',180);
     const send = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
+ if(path==='/api/auth/config')return send({googleEnabled:googleEnabled()});
+ if(path.startsWith('/api/auth/google/'))return googleApi(req,res,path,body,send);
     if (path.startsWith('/api/payments/'))
         return send(await paymentApi(req, path, body));
     if (/^\/api\/(analytics|campaign-leads|questions|connections)$/.test(path) || /^\/api\/admin\/(growth-settings|campaigns|homecells|connections|questions|followups)(?:\/|$)/.test(path))
         return send(await growthApi(req, path, body));
     if (path === '/api/public' && method === 'GET')
-        return send({ settings: (await getDoc('settings')), services: (await getDoc('services')), wings: (await getDoc('wings')), events: (await publicEvents()), editorial: (await publicEditorial()), assets: assets(), demoMode, ...(await publicCommunity()), growth: (await publicGrowth()) });
+        return send({ googleEnabled:googleEnabled(),settings: (await getDoc('settings')), services: (await getDoc('services')), wings: (await getDoc('wings')), events: (await publicEvents()), editorial: (await publicEditorial()), assets: assets(), ...(await publicCommunity()), growth: (await publicGrowth()) });
     if (path.startsWith('/api/admin/editorial/') || path === '/api/admin/uploads')
         return send(await editorialApi(req, path, body));
     if (path === '/api/session' && method === 'GET') {
@@ -27,33 +34,27 @@ export async function api(req, res, path, body) {
     }
     if (path === '/api/login' && method === 'POST') {
         (await rateLimit(req, 'login'));
-        const email = emailField(body.email), password = field(body.password, 'Password', 256);
-        const user = (await db.prepare('SELECT * FROM users WHERE email=?').get(email));
+        const email = emailField(body.email), password = passwordField(body.password);
+        await rateLimit(req,'login-account:'+email,10);
+    const user = (await db.prepare('SELECT * FROM users WHERE email=?').get(email));
         // A dummy hash computation keeps unknown-email attempts similarly expensive.
-        const valid = validPassword(password, user?.password || '0123456789abcdef0123456789abcdef:' + '00'.repeat(64));
+        const valid = await validPassword(password, user?.password || dummyPassword);
         assert(user && valid, 'Email or password is incorrect.', 401);
+    if(!user.password.startsWith('scrypt-v2:'))await db.prepare('UPDATE users SET password=? WHERE id=?').run(await hashPassword(password),user.id);
         (await startSession(res, user.id));
         return send({ user: publicUser(user) });
     }
     if (path === '/api/register' && method === 'POST') {
         (await rateLimit(req, 'register', 8));
-        const name = field(body.name, 'Name', 100), email = emailField(body.email), password = field(body.password, 'Password', 256);
-        assert(password.length >= 12, 'Use a password with at least 12 characters.');
+        const name = field(body.name, 'Name', 100), email = emailField(body.email), password = passwordField(body.password);
+        assert(password.length >= 15, 'Use a password with at least 15 characters.');
         assert(!(await db.prepare('SELECT id FROM users WHERE email=?').get(email)), 'An account already exists with this email.', 409);
-        const result = (await db.prepare('INSERT INTO users(name,email,password) VALUES(?,?,?)').run(name, email, hashPassword(password)));
+        const result = (await db.prepare('INSERT INTO users(name,email,password) VALUES(?,?,?)').run(name, email, await hashPassword(password)));
         const user = (await db.prepare('SELECT * FROM users WHERE id=?').get(result.lastInsertRowid));
         (await startSession(res, user.id));
         return send({ user: publicUser(user) }, 201);
     }
-    if (path === '/api/demo' && method === 'POST') {
-        assert(demoMode, 'Demo access is disabled.', 404);
-        (await rateLimit(req, 'demo'));
-        assert(['member', 'admin'].includes(body.role), 'Invalid demo role.');
-        const user = body.role === 'admin' ? (await db.prepare("SELECT * FROM users WHERE role='admin' LIMIT 1").get()) : (await db.prepare('SELECT * FROM users WHERE email=?').get('grace@example.test'));
-        (await startSession(res, user.id));
-        return send({ user: publicUser(user) });
-    }
-    if (path === '/api/logout' && method === 'POST') {
+  if (path === '/api/logout' && method === 'POST') {
         (await endSession(req, res));
         return send({ ok: true });
     }
@@ -80,10 +81,11 @@ export async function api(req, res, path, body) {
         return send({ user: publicUser((await db.prepare('SELECT * FROM users WHERE id=?').get(user.id))) });
     }
     if (path === '/api/password' && method === 'PUT') {
-        const previous = field(body.currentPassword, 'Current password', 256), next = field(body.password, 'New password', 256);
-        assert(validPassword(previous, user.password), 'Current password is incorrect.', 400);
-        assert(next.length >= 12, 'Use at least 12 characters.');
-        (await db.prepare('UPDATE users SET password=? WHERE id=?').run(hashPassword(next), user.id));
+        await rateLimit(req,'password-change',5);
+    const previous = passwordField(body.currentPassword), next = passwordField(body.password);
+        assert(await validPassword(previous, user.password), 'Current password is incorrect.', 400);
+        assert(next.length >= 15, 'Use at least 15 characters.');
+        (await db.prepare('UPDATE users SET password=? WHERE id=?').run(await hashPassword(next), user.id));
         (await db.prepare('DELETE FROM sessions WHERE user_id=?').run(user.id));
         (await startSession(res, user.id));
         return send({ ok: true });

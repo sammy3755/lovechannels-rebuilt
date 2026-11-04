@@ -109,3 +109,9 @@ CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS souls_owner ON souls(owner);
 
 CREATE INDEX IF NOT EXISTS member_cell ON member_connections(cell_id);
+
+CREATE TABLE IF NOT EXISTS lovechannels.oauth_challenges(state TEXT PRIMARY KEY,binding TEXT NOT NULL,nonce TEXT NOT NULL,verifier TEXT NOT NULL,link_user_id BIGINT REFERENCES lovechannels.users(id) ON DELETE CASCADE,expires BIGINT NOT NULL);
+CREATE TABLE IF NOT EXISTS lovechannels.auth_identities(subject TEXT PRIMARY KEY,user_id BIGINT NOT NULL UNIQUE REFERENCES lovechannels.users(id) ON DELETE CASCADE);
+ALTER TABLE lovechannels.oauth_challenges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lovechannels.auth_identities ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS oauth_challenges_expiry ON lovechannels.oauth_challenges(expires);

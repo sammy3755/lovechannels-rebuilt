@@ -1,4 +1,4 @@
-import { db, getDoc, setDoc, demoMode } from './db.mjs';
+import { db, getDoc, setDoc } from './db.mjs';
 import { bookingTypes } from '../public/js/catalogue.js';
 
 db.exec(`
@@ -24,12 +24,6 @@ export const communityContent = {
 };
 if (!db.prepare('SELECT key FROM documents WHERE key=?').get('community')) setDoc('community',communityContent);
 
-if (demoMode && !db.prepare('SELECT key FROM documents WHERE key=?').get('community-demo-v1')) {
-  // Sample products remain confined to the loopback-only demo database.
-  db.prepare('INSERT INTO resources(type,title,author,description,price_kobo,url,published) VALUES(?,?,?,?,?,?,?)').run('book','Faith for Everyday Life — sample book','Demo catalogue','A sample catalogue entry for reviewing book orders. This is not an actual church publication.',250000,'',1);
-  db.prepare('INSERT INTO resources(type,title,author,description,price_kobo,url,published) VALUES(?,?,?,?,?,?,?)').run('message','Worship & the Word — sample message','Demo library','Preview entry. Church administrators can replace this with a real sermon link.',0,'',1);
-  setDoc('community-demo-v1',true);
-}
 export function publicCommunity() {
   const community=getDoc('community');
   return { community, bookingTypes, resources:db.prepare('SELECT * FROM resources WHERE published=1 ORDER BY id DESC').all(), testimonies:db.prepare("SELECT testimonies.id,title,story,users.name FROM testimonies JOIN users ON users.id=user_id WHERE consent=1 AND status='Published' ORDER BY testimonies.id DESC").all() };

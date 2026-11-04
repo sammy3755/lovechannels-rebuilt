@@ -14,7 +14,7 @@ async function call(path, body, { cookie, method = body ? 'POST' : 'GET', header
   return { status:response.status, data:await response.json(), cookie:response.headers.get('set-cookie')?.split(';')[0] };
 }
 before(async () => {
-  server = spawn(process.execPath,['server/index.mjs','--demo'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4188',DATA_DIR:directory,ADMIN_PASSWORD:'TestAdminPassword-321'},stdio:'ignore'});
+  server = spawn(process.execPath,['server/index.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4188',DATA_DIR:directory,ADMIN_PASSWORD:'TestAdminPassword-321'},stdio:'ignore'});
   let ready = false;
   for (let i=0;i<100;i++) { try { ready=(await fetch(`${origin}/api/public`)).ok; } catch {} if(ready) break; await delay(50); }
   assert.ok(ready,'test server started');
@@ -110,13 +110,13 @@ test('password changes invalidate other sessions and logout revokes access', asy
 test('normal mode has no demo access or sample member records', async () => {
   const normalOrigin='http://127.0.0.1:4191';
   let output='';
-  const normal=spawn(process.execPath,['server/index.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4191',DATA_DIR:directory,ADMIN_PASSWORD:'NormalAdminPassword-321'},stdio:['ignore','pipe','pipe']});
+  const normal=spawn(process.execPath,['server/index.mjs'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4191',DATA_DIR:join(directory,'normal'),ADMIN_PASSWORD:'NormalAdminPassword-321'},stdio:['ignore','pipe','pipe']});
   normal.stdout.on('data',chunk=>{output+=chunk;}); normal.stderr.on('data',chunk=>{output+=chunk;});
   try {
     let ready=false;
     for(let i=0;i<300;i++) { try { ready=(await fetch(`${normalOrigin}/api/public`)).ok; } catch {} if(ready || normal.exitCode !== null) break; await delay(100); }
     assert.ok(ready,output);
-    assert.equal((await (await fetch(`${normalOrigin}/api/public`)).json()).demoMode,false);
+    assert.equal((await (await fetch(`${normalOrigin}/api/public`)).json()).demoMode,undefined);
     assert.equal((await fetch(`${normalOrigin}/api/demo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'admin'})})).status,404);
     const login=await fetch(`${normalOrigin}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'admin@thelovechannels.local',password:'NormalAdminPassword-321'})});
     assert.equal(login.status,200);

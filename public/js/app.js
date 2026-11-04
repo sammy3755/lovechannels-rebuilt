@@ -16,6 +16,8 @@ if(new URLSearchParams(location.search).get('look')==='ivory')document.documentE
 const requestedTheme=new URLSearchParams(location.search).get('look');if(Object.hasOwn(themeNames,requestedTheme))document.documentElement.dataset.theme=requestedTheme;
 applyPalette(document.documentElement.dataset.theme);
 initFont();
+const authError=new URLSearchParams(location.hash.split('?')[1]||'').get('authError');
+if(authError){setTimeout(()=>toast(authError==='link-required'?'Sign in with your password, then connect Google in your member profile.':'Google sign-in could not be completed. Please try again.'),1200);history.replaceState(null,'',location.pathname+location.search+'#/');}
 document.addEventListener('click', event => { const eye=event.target.closest('[data-password-toggle]');if(eye){const input=eye.closest('.password-wrap').querySelector('input');const show=input.type==='password';input.type=show?'text':'password';eye.setAttribute('aria-pressed',String(show));eye.setAttribute('aria-label',show?'Hide password':'Show password');} if (event.target.closest('[data-close]')) closeModal(); });
 $('#modal').addEventListener('click', event => { if (event.target === $('#modal')) { const rect = $('#modal').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeModal(); } });
 
@@ -29,7 +31,6 @@ async function render(resetScroll = false) {
     const parts = location.hash.startsWith('#/') ? location.hash.slice(2).split('?')[0].split('/') : [];
     const page = parts[0] || (['/member','/admin'].includes(location.pathname) && !location.hash ? location.pathname.slice(1) : 'home');
 
-    if(page==='preview' && data.demoMode && ['member','admin'].includes(parts[1])) {await request('/demo',{role:parts[1]});location.hash=`#/${parts[1]}`;return;}
     if (!['home','member','admin','communities','community',...publicPages].includes(page)) { location.hash = '#/'; return; }
     const portalStyles=(page==='member'||page==='admin')&&user;
     await Promise.all([...document.querySelectorAll('[data-portal-style]')].map(link=>{
@@ -71,4 +72,3 @@ async function render(resetScroll = false) {
 }
 window.addEventListener('hashchange', () => { if (location.hash.startsWith('#/')) { closeModal(); render(true); } else if(!document.querySelector('.ac-hero')){closeModal();render();} });
 render();
-

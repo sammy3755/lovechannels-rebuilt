@@ -2,6 +2,7 @@ import {AsyncLocalStorage} from 'node:async_hooks';
 import {readFile} from 'node:fs/promises';
 import {createHmac} from 'node:crypto';
 import pg from 'pg';
+import {isIP} from 'node:net';
 
 const scope=new AsyncLocalStorage(),testMode=process.env.LC_PGLITE==='1';
 pg.types.setTypeParser(20,v=>{const n=Number(v);if(!Number.isSafeInteger(n))throw Error('Database integer exceeds the supported range.');return n;});
@@ -21,7 +22,7 @@ const utcNow="to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS')";
 export function postgresSQL(input){
  let sql=input.trim().replace(/;$/,'');
  // Explicit schema names work with transaction-mode connection pooling.
- const tables='documents|users|sessions|souls|prayers|rsvps|visits|bookings|testimonies|contributions|threads|thread_messages|resources|orders|campaigns|campaign_leads|analytics_events|homecells|member_connections|followups|questions|payments|uploaded_assets|request_limits';
+ const tables='documents|users|sessions|souls|prayers|rsvps|visits|bookings|testimonies|contributions|threads|thread_messages|resources|orders|campaigns|campaign_leads|analytics_events|homecells|member_connections|followups|questions|payments|uploaded_assets|request_limits|oauth_challenges|auth_identities';
  sql=sql.replace(new RegExp('\\b(FROM|JOIN|UPDATE|INTO)\\s+('+tables+')\\b','gi'),(_,keyword,table)=>keyword+' lovechannels.'+table);
 
  sql=sql.replace(/\bCURRENT_TIMESTAMP\b/gi,utcNow).replace(/ORDER BY rowid DESC/gi,'ORDER BY created DESC');
@@ -44,7 +45,7 @@ export const db={
   async all(...params){return (await query(sql,params)).rows.map(normalise);},
   async run(...params){
    const table=sql.match(/^\s*INSERT(?: OR IGNORE)? INTO\s+(\w+)/i)?.[1];
-   const returning=table&&!['documents','sessions','rsvps','member_connections','payments','uploaded_assets','request_limits'].includes(table);
+   const returning=table&&!['documents','sessions','rsvps','member_connections','payments','uploaded_assets','request_limits','oauth_challenges','auth_identities'].includes(table);
    const result=await query(sql+(returning?' RETURNING id':''),params);
    return {changes:result.rowCount??result.affectedRows??result.rows.length,lastInsertRowid:result.rows[0]?.id};
   }
@@ -78,7 +79,8 @@ export async function withDatabase(action){
 const testLimits=new Map();
 export async function countAttempt(req,key,max){
  const now=Date.now(),until=Math.floor(now/600000+1)*600000;
- const ip=(process.env.VERCEL?req.headers['x-forwarded-for']?.split(',')[0]:req.socket?.remoteAddress)||'unknown';
+ const address=(process.env.VERCEL?req.headers['x-forwarded-for']?.split(',')[0]?.trim():req.socket?.remoteAddress)||'';
+ const ip=key.startsWith('login-account:')?'account':isIP(address)?address:'unknown';
  if(!testMode&&!process.env.RATE_LIMIT_SECRET)throw Error('RATE_LIMIT_SECRET is required for hosted rate limiting.');
  const digest=createHmac('sha256',process.env.RATE_LIMIT_SECRET||'embedded-verification').update(ip+':'+key+':'+until).digest('hex');
  if(testMode){const n=(testLimits.get(digest)||0)+1;testLimits.set(digest,n);return n<=max;}

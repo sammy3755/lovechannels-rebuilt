@@ -4,7 +4,7 @@ The production app runs on Vercel with a private Neon Postgres database. The Git
 
 ## Site and dashboards
 
-The public site uses the existing design, media, carousels and colour palettes. Member and administrator routes are `/#/member` and `/#/admin`. Signing in is required; administrator endpoints check the account role on every request. Production never enables the local demo shortcuts.
+The public site uses the existing design, media, carousels and colour palettes. Member and administrator routes are `/#/member` and `/#/admin`. Signing in is required; administrator endpoints check the account role on every request. Password-bypass preview routes and sample-data seeding have been removed.
 
 ## Runtime
 

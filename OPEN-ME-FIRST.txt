@@ -1,35 +1,15 @@
-THE LOVE CHANNELS - WEBSITE SOURCE FILES (revision 14)
+THE LOVECHANNELS — SOURCE FILES
 
-OPEN IT ON WINDOWS
-1. Extract the ZIP to a normal folder.
-2. Double-click START-WEBSITE.cmd.
-3. Leave the command window open, then visit:
-   http://127.0.0.1:4173/?look=blue-trio&v=14
+1. Install Node.js 24, then run npm ci in this folder.
+2. Open START-WEBSITE.cmd, or run node server/index.mjs.
+3. Visit http://127.0.0.1:4173/?look=blue-white&font=inter
 
-The launcher uses Node.js 24 or newer. If Node.js is not installed,
-install it first. On this computer the launcher can also use the
-existing bundled Node runtime.
+Local development uses its own SQLite database and never changes hosted records.
+Set ADMIN_EMAIL and ADMIN_PASSWORD before the first local start to choose your
+local administrator. Otherwise a generated local password is printed once.
+Use /#/member and /#/admin with an ordinary authenticated account.
 
-MEMBER PREVIEW
-http://127.0.0.1:4173/#/preview/member
-
-ADMIN PREVIEW
-http://127.0.0.1:4173/#/preview/admin
-
-EDIT THE SITE
-public/index.html: page entry point
-public/js/: website, dashboards and interactions
-public/styles/: styling and all palettes
-public/assets/: church photographs, logos, fonts and hero video
-server/: API, content defaults and local database handling
-
-This is a complete app. Opening public/index.html by double-click
-will not run its API or dashboard. Use the launcher instead.
-No npm install or build step is needed for this local version.
-
-The ZIP contains the source and assets. Runtime databases, private
-member records, credentials and screenshot/test-output folders are
-not included. A new local demo database is created on first launch.
-
-Payments require provider credentials. AI calling is preparation
-only. Live hosting setup is being prepared separately.
+Live site: https://lovechannels-rebuilt.vercel.app
+Deployment and provider setup: README-HOSTING.md
+Security details and remaining configuration: SECURITY.md
+Secrets and live database credentials are excluded from this package.

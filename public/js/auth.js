@@ -1,19 +1,12 @@
-import { $, $$, e, modal, field, submit, request, handleForm, closeModal, toast } from './ui.js';
-
-export function openAuth(data, onSuccess, admin = false) {
-  let registering = false;
-  function draw() {
-    modal(admin ? 'Church administration.' : registering ? 'Find your place.' : 'Welcome home.', `${admin ? '<p>Sign in with your administrator account.</p>' : `<div class="auth-tabs"><button class="${!registering ? 'active' : ''}" data-auth-tab="login">Sign in</button><button class="${registering ? 'active' : ''}" data-auth-tab="register">Become a member</button></div>`}<form id="auth-form">${registering ? field('Full name','name','','text',true,'autocomplete="name" maxlength="100"') : ''}${field('Email address','email','','email',true,'autocomplete="username"')}${field('Password','password','','password',true,`autocomplete="${registering ? 'new-password' : 'current-password'}" ${registering ? 'minlength="12"' : ''} maxlength="256"`)}${registering ? '<p class="form-note">Use at least 12 characters. Your profile is visible to church administrators. Prayer requests are shared only with you and church administrators.</p>' : '<p class="form-note">Need account help? Contact the church office.</p>'}${submit(registering ? 'Create my account' : 'Sign in')}</form>${data.demoMode ? `<div class="demo-access"><p>LOCAL PREVIEW · Explore with sample records</p><button class="button small outline" data-demo="member">Member demo</button><button class="button small outline" data-demo="admin">Admin demo</button></div>` : ''}`);
-    $$('[data-auth-tab]').forEach(button => button.addEventListener('click', () => { registering = button.dataset.authTab === 'register'; draw(); }));
-    handleForm($('#auth-form'), async values => {
-      const result = await request(registering ? '/register' : '/login', values);
-      closeModal(); onSuccess(result.user);
-    });
-    $$('[data-demo]').forEach(button => button.addEventListener('click', async () => {
-      button.disabled = true;
-      try { const result = await request('/demo', { role: button.dataset.demo }); closeModal(); onSuccess(result.user); }
-      catch (err) { toast(err.message); button.disabled = false; }
-    }));
-  }
-  draw();
+import {$,$$,modal,field,submit,request,handleForm,closeModal,toast} from './ui.js';
+export function openAuth(data,onSuccess,admin=false){
+ let registering=false,google=Boolean(data.googleEnabled);
+ function draw(){
+  modal(admin?'Church administration':registering?'You belong here.':'Welcome home.',`<div class="lc-auth-intro"><img src="/assets/logo-blue.webp" alt="" width="46" height="42"><p>${admin?'Care for the people. Steward the house.':'One faith. One family. Your next chapter.'}</p></div>${admin?'':`<div class="auth-tabs"><button type="button" class="${registering?'':'active'}" data-auth-tab="login">Sign in</button><button type="button" class="${registering?'active':''}" data-auth-tab="register">Create account</button></div>`}<form id="auth-form">${registering?field('Full name','name','','text',true,'autocomplete="name" maxlength="100"'):''}${field('Email address','email','','email',true,'autocomplete="username" maxlength="254"')}${field('Password','password','','password',true,`autocomplete="${registering?'new-password':'current-password'}" ${registering?'minlength="15"':''} maxlength="256"`)}<p class="form-note">${registering?'Use at least 15 characters. Your personal details are shared only where needed for church membership and care.':'Your church account, securely in one place.'}</p>${submit(registering?'Create my account':'Sign in')}</form>${google?'<div class="lc-auth-divider"><span>or</span></div><button type="button" class="lc-google-button" data-google-signin><span aria-hidden="true">G</span>Continue with Google</button>':''}<p class="lc-auth-help">Need a hand? <a href="mailto:info@thelovechannels.com">Contact the church office ↗</a></p>`);
+  $('#modal').classList.add('lc-auth-dialog');
+  $$('[data-auth-tab]').forEach(b=>b.addEventListener('click',()=>{registering=b.dataset.authTab==='register';draw();}));
+  handleForm($('#auth-form'),async values=>{const result=await request(registering?'/register':'/login',values);closeModal();onSuccess(result.user);});
+  $('[data-google-signin]')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;try{const result=await request('/auth/google/start',{});location.assign(result.url);}catch(error){toast(error.message);button.disabled=false;}});
+ }
+ draw();
 }

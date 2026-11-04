@@ -15,6 +15,7 @@ export async function request(path, data, method = 'POST') {
 let toastTimer;
 export function toast(message) { $('#toast').textContent = message; $('#toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('visible'), 5000); }
 export function modal(title, content) {
+  $('#modal').classList.remove('lc-auth-dialog');
   $('#modal-body').innerHTML = `<p class="eyebrow">The Love Channels</p><h2 id="modal-title">${e(title)}</h2>${content}`;
   if (!$('#modal').open) $('#modal').showModal();
 }

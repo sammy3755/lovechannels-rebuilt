@@ -1,4 +1,4 @@
-import { db, getDoc, setDoc, demoMode } from './db.mjs';
+import { db, getDoc, setDoc } from './db.mjs';
 import { bookingTypes } from '../../public/js/catalogue.js';
 (await db.exec(`
   CREATE TABLE IF NOT EXISTS bookings (id INTEGER PRIMARY KEY,user_id INTEGER NOT NULL REFERENCES users(id),type TEXT NOT NULL,preferred_date TEXT NOT NULL,preferred_time TEXT NOT NULL DEFAULT '',phone TEXT NOT NULL,details TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Requested',scheduled_at TEXT NOT NULL DEFAULT '',admin_note TEXT NOT NULL DEFAULT '',created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -23,12 +23,6 @@ export const communityContent = {
 };
 if (!(await db.prepare('SELECT key FROM documents WHERE key=?').get('community')))
     (await setDoc('community', communityContent));
-if (demoMode && !(await db.prepare('SELECT key FROM documents WHERE key=?').get('community-demo-v1'))) {
-    // Sample products remain confined to the loopback-only demo database.
-    (await db.prepare('INSERT INTO resources(type,title,author,description,price_kobo,url,published) VALUES(?,?,?,?,?,?,?)').run('book', 'Faith for Everyday Life — sample book', 'Demo catalogue', 'A sample catalogue entry for reviewing book orders. This is not an actual church publication.', 250000, '', 1));
-    (await db.prepare('INSERT INTO resources(type,title,author,description,price_kobo,url,published) VALUES(?,?,?,?,?,?,?)').run('message', 'Worship & the Word — sample message', 'Demo library', 'Preview entry. Church administrators can replace this with a real sermon link.', 0, '', 1));
-    (await setDoc('community-demo-v1', true));
-}
 export async function publicCommunity() {
     const community = (await getDoc('community'));
     return { community, bookingTypes, resources: (await db.prepare('SELECT * FROM resources WHERE published=1 ORDER BY id DESC').all()), testimonies: (await db.prepare("SELECT testimonies.id,title,story,users.name FROM testimonies JOIN users ON users.id=user_id WHERE consent=1 AND status='Published' ORDER BY testimonies.id DESC").all()) };

@@ -1,5 +1,5 @@
 import { countAttempt } from '../postgres.mjs';
-import { randomBytes, createHash, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { db } from './db.mjs';
 export class HttpError extends Error {
     constructor(status, message) { super(message); this.status = status; }
@@ -9,7 +9,7 @@ export const assert = (condition, message, status = 400) => { if (!condition)
 const digest = token => createHash('sha256').update(token).digest('hex');
 export async function currentUser(req) {
     const token = req.headers.cookie?.split(';').map(s => s.trim()).find(s => s.startsWith('lc_session='))?.slice(11);
-    if (!token)
+    if (!token || !/^[a-f0-9]{64}$/.test(token))
         return null;
     return (await db.prepare('SELECT users.* FROM users JOIN sessions ON users.id=sessions.user_id WHERE sessions.token=? AND sessions.expires>?').get(digest(token), Date.now())) || null;
 }
@@ -29,12 +29,9 @@ export async function endSession(req, res) {
     const token = req.headers.cookie?.match(/(?:^|;\s*)lc_session=([^;]+)/)?.[1];
     if (token)
         (await db.prepare('DELETE FROM sessions WHERE token=?').run(digest(token)));
-    res.setHeader('Set-Cookie', 'lc_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
+    res.setHeader('Set-Cookie', `lc_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${process.env.COOKIE_SECURE === '1' ? '; Secure' : ''}`);
 }
-export function validPassword(password, saved) {
-    const [salt, hash] = saved.split(':');
-    return timingSafeEqual(scryptSync(password, salt, 64), Buffer.from(hash, 'hex'));
-}
+export {validPassword} from './passwords.mjs';
 export async function rateLimit(req, key, max = 20) { assert(await countAttempt(req, key, max), 'Too many attempts. Please try again in ten minutes.', 429); }
 export const textField = (value, label, max = 500, required = true) => {
     assert(typeof value === 'string', `${label} must be text.`);
@@ -62,3 +59,5 @@ export function safeLink(value, label, whatsapp = false) {
         assert(['wa.me', 'chat.whatsapp.com', 'api.whatsapp.com'].includes(url.hostname), `${label} must be a WhatsApp link.`);
     return url.href;
 }
+
+export function passwordField(value){assert(typeof value==='string'&&value.length>0&&value.length<=256,'Enter a password of 1–256 characters.');return value;}
