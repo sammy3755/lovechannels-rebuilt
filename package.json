@@ -3,9 +3,9 @@
   "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "The Love Channels — church website and community portal",
+  "description": "The Love Channels \u00e2\u20ac\u201d church website and community portal",
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "scripts": {
     "start": "node server/index.mjs",
