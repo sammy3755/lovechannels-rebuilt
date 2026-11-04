@@ -20,15 +20,15 @@ export function initRing(root){
  };
  const measure=()=>{radius=cards.length===1?0:cards.length===2?cards[0].offsetWidth*.7:Math.round((cards[0].offsetWidth/1.9)/Math.tan(Math.PI/cards.length)*1.22);cards.forEach((card,i)=>card.style.transform=`translate(-50%,-50%) rotateY(${i*step}deg) translateZ(${radius}px)`);render();};
  const resize=new ResizeObserver(()=>{if(!root.isConnected){resize.disconnect();return;}measure();});resize.observe(stage);measure();
- const go=direction=>{if(cards.length<2)return;rotation.interacted();angle=(Math.round(angle/step)-direction)*step;ring.classList.add('is-stepping');render();};
+ const go=direction=>{if(cards.length<2)return;rotation.interacted(3500);angle=(Math.round(angle/step)-direction)*step;ring.classList.add('is-stepping');render();};
  root.querySelector(`#${prefix}-prev`).addEventListener('click',()=>go(-1));root.querySelector(`#${prefix}-next`).addEventListener('click',()=>go(1));
  stage.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();go(event.key==='ArrowLeft'?-1:1);}});
  stage.addEventListener('dragstart',event=>event.preventDefault());
- stage.addEventListener('pointerdown',event=>{if(cards.length<2||event.button!==0||event.target.closest('button,a'))return;drag={x:event.clientX,y:event.clientY,angle,moved:false};ring.classList.remove('is-stepping');stage.setPointerCapture(event.pointerId);rotation.interacted();});
+ stage.addEventListener('pointerdown',event=>{if(cards.length<2||event.button!==0||event.target.closest('button,a'))return;drag={x:event.clientX,y:event.clientY,angle,moved:false};ring.classList.remove('is-stepping');stage.setPointerCapture(event.pointerId);rotation.interacted(3500);});
  stage.addEventListener('pointermove',event=>{if(!drag)return;const dx=event.clientX-drag.x;if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(event.clientY-drag.y)){drag.moved=true;angle=drag.angle+dx*.38;render();}});
  const release=()=>{if(!drag)return;if(drag.moved){angle=Math.round(angle/step)*step;ring.classList.add('is-stepping');render();}drag=null;};
  stage.addEventListener('pointerup',release);stage.addEventListener('pointercancel',release);stage.addEventListener('lostpointercapture',release);
  if(cards.length===1){root.querySelectorAll('.ac-deck-controls button').forEach(button=>button.disabled=true);root.dataset.rotationState='paused';return;}
- root.querySelectorAll('.ac-card-cta').forEach(button=>button.addEventListener('pointerenter',()=>rotation.interacted()));
- rotation=autoRotate(root,{pauseOnHover:false,frame:dt=>{if(!drag){ring.classList.remove('is-stepping');angle-=9*dt;render();}}});
+ root.querySelectorAll('.ac-card-cta').forEach(button=>button.addEventListener('pointerenter',()=>rotation.interacted(3500)));
+ rotation=autoRotate(root,{visibilityTarget:stage,interactionDelay:3500,pauseOnPointerFocus:false,pauseOnHover:false,frame:dt=>{if(!drag){ring.classList.remove('is-stepping');angle-=(root.id==='events'?6:14)*dt;render();}}});
 }

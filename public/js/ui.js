@@ -22,6 +22,8 @@ export const closeModal = () => $('#modal').close();
 export const arrow = '<span aria-hidden="true">↗</span>';
 export function field(label, name, value = '', type = 'text', required = false, extra = '') {
   const id = `field-${name}`;
+  if(type==='password')return `<label class="field" for="${id}"><span>${e(label)}</span><span class="password-wrap"><input id="${id}" name="${e(name)}" type="password" value="${e(value)}" ${required?'required':''} ${extra}><button type="button" class="password-eye" data-password-toggle aria-controls="${id}" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button></span></label>`;
+
   return `<label class="field" for="${id}"><span>${e(label)}</span>${type === 'textarea' ? `<textarea id="${id}" name="${e(name)}" rows="4" ${required ? 'required' : ''} ${extra}>${e(value)}</textarea>` : `<input id="${id}" name="${e(name)}" type="${type}" value="${e(value)}" ${required ? 'required' : ''} ${extra}>`}</label>`;
 }
 export function selectField(label, name, options, selected = '') {
@@ -47,7 +49,7 @@ export function eventDate(event) {
 export const wingOptions = wings => [['','Choose a wing'], ...wings.map(w => [w.id,w.name])];
 export const empty = message => `<div class="empty-state"><span aria-hidden="true">✳</span><p>${e(message)}</p></div>`;
 export function themeButton() { return `<button class="theme-switch" data-theme-toggle aria-label="Choose colours and fonts" title="Choose from ${palettes.length} colour palettes"><span class="theme-orb" aria-hidden="true"></span><span class="theme-name">${themeNames[document.documentElement.dataset.theme]||'Ivory'}</span></button>`; }
-export function brand(name = 'The Love Channels') { return `<a href="#/" class="brand" aria-label="${e(name)} home"><span class="brand-symbol" aria-hidden="true"><img class="brand-logo logo-blue" src="/assets/logo-blue.webp" alt="" width="44" height="40"><img class="brand-logo logo-white" src="/assets/logo-white.webp" alt="" width="44" height="40"></span><span>${e(name)}<small>CHRISTIAN CENTRE</small></span></a>`; }
+export function brand(name = 'The LoveChannels') { name=name.replace(/^The Love Channels$/,'The LoveChannels');return `<a href="#/" class="brand" aria-label="${e(name)} home"><span class="brand-symbol" aria-hidden="true"><img class="brand-logo logo-blue" src="/assets/logo-blue.webp" alt="" width="44" height="40"><img class="brand-logo logo-white" src="/assets/logo-white.webp" alt="" width="44" height="40"></span><span>${e(name)}<small>CHRISTIAN CENTRE</small></span></a>`; }
 export function activateThemeButtons() {
  $$('[data-theme-toggle]').forEach(button=>button.addEventListener('click',()=>{
   const current=document.documentElement.dataset.theme;

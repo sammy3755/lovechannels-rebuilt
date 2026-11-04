@@ -1,0 +1,20 @@
+/* Photo transforms have one owner: the visibility-aware Web Animation in hero.js. */
+.ac-hero-slide>.ac-hero-art{animation:none!important}
+.ac-hero-slide.is-flyer{background:#f5f2f4}
+.ac-hero-slide.is-flyer>.ac-flyer-backdrop{inset:-2%;width:104%;height:104%;filter:blur(20px) brightness(1);opacity:.8;object-fit:cover;transform:scale(1.03)}
+.ac-hero-slide.is-flyer>.ac-hero-art{inset:0;width:100%;height:100%;object-fit:contain;object-position:center;padding:0 0 72px;background:transparent}
+.ac-hero-slide.is-flyer>.ac-hero-shade{background:linear-gradient(0deg,#16295033,transparent 20%)}
+.ac-hero-main:has(.is-flyer.is-active) .ac-hero-actions{filter:drop-shadow(0 2px 8px #ffffffb0)}
+.ac-lines{flex:1;min-width:0;gap:5px}.ac-hero-bottom .ac-lines button{flex:1;min-width:8px;max-width:30px;width:auto}.ac-arrow-pair{flex-shrink:0}
+@media(min-width:801px){.ac-hero-slide[data-mobile-only=true]{display:none!important}}
+@media(max-width:800px){.ac-hero-slide.is-flyer>.ac-hero-art{height:calc(100% - 112px);inset:0;object-position:center;padding:0}.ac-hero-slide.is-flyer>.ac-hero-shade{background:none}.ac-hero-bottom .ac-lines{gap:4px}.ac-hero-bottom .ac-lines button{min-width:7px;max-width:22px}.ac-hero-bottom{gap:12px!important}}
+.ac-hero-main:has(.is-flyer.is-active) .ac-arrow-pair button{color:#003299;border-color:#00329966;background:#ffffffd9}
+.ac-hero-main:has(.is-flyer.is-active) .ac-lines button:after{background:#00329955}
+.ac-hero-main:has(.is-flyer.is-active) .ac-lines button[aria-current=true]:after{background:#003299}
+
+/* The requested opening photograph is shown in full, with no cover crop. */
+.ac-hero-slide.is-whole-photo{background:#071a30}
+.ac-hero-slide.is-whole-photo>.ac-hero-art{object-fit:contain;object-position:right center;filter:none;opacity:1}
+.ac-hero-slide.is-whole-photo .ac-hero-copy{max-width:43%;z-index:3}
+.ac-hero-slide.is-whole-photo>.ac-hero-shade{background:linear-gradient(90deg,#071a30 0%,#071a30ee 32%,#071a3044 49%,transparent 65%)}
+@media(max-width:800px){.ac-hero-slide.is-whole-photo>.ac-hero-art{object-position:center;height:calc(100% - 112px)}.ac-hero-slide.is-whole-photo .ac-hero-copy{max-width:86%;top:5%}.ac-hero-slide.is-whole-photo>.ac-hero-shade{background:linear-gradient(0deg,#071a30aa,transparent 34%),linear-gradient(180deg,#071a30e6,transparent 45%)}.ac-hero-slide.is-whole-photo .ac-hero-copy>div{font-size:11px;line-height:1.6;margin-top:14px}}

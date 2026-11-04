@@ -14,8 +14,6 @@ dialog:has(.lc-font-picker){max-height:90svh;overflow-y:auto}dialog:has(.lc-font
 @keyframes lc-hero-zoom-in{from{transform:scale(1)}to{transform:scale(1.09)}}
 @keyframes lc-hero-zoom-out{from{transform:scale(1.09)}to{transform:scale(1)}}
 @keyframes lc-hero-flyer-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-.ac-hero-slide.is-active:not(.is-flyer):not(.is-film)>.ac-hero-art{animation:lc-hero-zoom-in 10s ease-in-out both;transform-origin:50% 40%}
-.ac-hero-slide.is-active:not(.is-flyer):not(.is-film):nth-child(odd)>.ac-hero-art{animation-name:lc-hero-zoom-out}
 .ac-hero-slide.is-active.is-flyer>.ac-hero-art{animation:lc-hero-flyer-breathe 10s ease-in-out both}
 [data-hero-root][data-hero-motion=paused] .ac-hero-art{animation-play-state:paused}
 [data-palette-family=daylight] .ac-hero-slide:not(.is-flyer) .ac-hero-shade{background:linear-gradient(90deg,#255d7c88,#3c91b312 90%),linear-gradient(0deg,#28597544,transparent 65%)}

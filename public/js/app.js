@@ -16,7 +16,7 @@ if(new URLSearchParams(location.search).get('look')==='ivory')document.documentE
 const requestedTheme=new URLSearchParams(location.search).get('look');if(Object.hasOwn(themeNames,requestedTheme))document.documentElement.dataset.theme=requestedTheme;
 applyPalette(document.documentElement.dataset.theme);
 initFont();
-document.addEventListener('click', event => { if (event.target.closest('[data-close]')) closeModal(); });
+document.addEventListener('click', event => { const eye=event.target.closest('[data-password-toggle]');if(eye){const input=eye.closest('.password-wrap').querySelector('input');const show=input.type==='password';input.type=show?'text':'password';eye.setAttribute('aria-pressed',String(show));eye.setAttribute('aria-label',show?'Hide password':'Show password');} if (event.target.closest('[data-close]')) closeModal(); });
 $('#modal').addEventListener('click', event => { if (event.target === $('#modal')) { const rect = $('#modal').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeModal(); } });
 
 async function render(resetScroll = false) {
@@ -67,6 +67,7 @@ async function render(resetScroll = false) {
     if (id !== renderId) return;
     $('#app').innerHTML = `<main class="loading" id="main"><p>${e(error.message)}</p><p><a class="button" href="#/">Return home ↗</a></p><p class="form-note">The app needs its Node.js server. Open http://127.0.0.1:4173 after starting it.</p></main>`;
   }
+  finally {if(id===renderId)document.body.classList.remove('app-is-loading');}
 }
 window.addEventListener('hashchange', () => { if (location.hash.startsWith('#/')) { closeModal(); render(true); } else if(!document.querySelector('.ac-hero')){closeModal();render();} });
 render();
