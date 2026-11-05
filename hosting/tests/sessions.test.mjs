@@ -17,7 +17,7 @@ test('member/admin lifetimes differ and read-only status never extends idle expi
  const real=Date.now;let now=real();Date.now=()=>now;
  try{
   for(const [id,idle,max] of [[member,900,28800],[admin,300,7200]]){
-   const s=await login(id);assert.equal(s.metadata.idleSeconds,idle);assert.equal(s.metadata.absoluteSeconds,max);assert.match(s.header,new RegExp('Max-Age='+max));
+   const s=await login(id);assert.equal(s.metadata.issuedAt,now);assert.equal(s.metadata.idleSeconds,idle);assert.equal(s.metadata.absoluteSeconds,max);assert.match(s.header,new RegExp('Max-Age='+max));
    now+=idle*1000-1;
    const out=response();await withDatabase(()=>api(request(s.cookie),out,'/api/session',{}));const status=JSON.parse(out.body);assert.ok(status.user);assert.equal(status.session.idleExpiresAt,s.metadata.idleExpiresAt);
    now+=1;assert.equal(await withDatabase(()=>currentUser(request(s.cookie))),null);
