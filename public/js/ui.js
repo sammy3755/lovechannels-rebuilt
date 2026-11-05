@@ -48,7 +48,7 @@ export function eventDate(event) {
   return date;
 }
 export const wingOptions = wings => [['','Choose a wing'], ...wings.map(w => [w.id,w.name])];
-export const empty = message => `<div class="empty-state"><span aria-hidden="true">✳</span><p>${e(message)}</p></div>`;
+export const empty = message => `<div class="empty-state"><p>${e(message)}</p></div>`;
 export function themeButton() { return `<button class="theme-switch" data-theme-toggle aria-label="Choose colours and fonts" title="Choose from ${palettes.length} colour palettes"><span class="theme-orb" aria-hidden="true"></span><span class="theme-name">${themeNames[document.documentElement.dataset.theme]||'Ivory'}</span></button>`; }
 export function brand(name = 'The LoveChannels') { name=name.replace(/^The Love Channels$/,'The LoveChannels');return `<a href="#/" class="brand" aria-label="${e(name)} home"><span class="brand-symbol" aria-hidden="true"><img class="brand-logo logo-blue" src="/assets/logo-blue.webp" alt="" width="44" height="40"><img class="brand-logo logo-white" src="/assets/logo-white.webp" alt="" width="44" height="40"></span><span>${e(name)}<small>CHRISTIAN CENTRE</small></span></a>`; }
 export function activateThemeButtons() {
