@@ -7,8 +7,11 @@ export function hsbToHex([h,s,b]){
  return '#'+rgb.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('');
 }
 export const hsbPalettes=[
- {id:'white-blue-only',name:'White & Blue Only',mode:'light',bright:true,fresh:true,colours:'White and royal blue · no grey or gold accents',hsbTokens:{
-  canvas:[0,0,100],surface:[0,0,100],'surface-alt':[0,0,100],ink:[220.392157,100,60],muted:[220.392157,100,60],line:[220.392157,100,60],primary:[220.392157,100,60],'on-primary':[0,0,100],gold:[220.392157,100,60],'gold-soft':[0,0,100],'hero-accent':[0,0,100]
+ {id:'white-blue-only',name:'White & Royal Blue Only',mode:'light',bright:true,fresh:true,colours:'White and royal blue · no grey or gold accents',hsbTokens:{
+  canvas:[0,0,100],surface:[0,0,100],'surface-alt':[0,0,100],ink:[225,71.111111,88.235294],muted:[225,71.111111,88.235294],line:[225,71.111111,88.235294],primary:[225,71.111111,88.235294],'on-primary':[0,0,100],gold:[225,71.111111,88.235294],'gold-soft':[0,0,100],'hero-accent':[0,0,100]
+ }},
+ {id:'white-royal-black',name:'White, Royal Blue & Black',mode:'light',bright:true,fresh:true,colours:'Pure white · royal blue · black / HSB',hsbTokens:{
+  canvas:[0,0,100],surface:[0,0,100],'surface-alt':[0,0,100],ink:[0,0,0],muted:[0,0,0],line:[225,71.111111,88.235294],primary:[225,71.111111,88.235294],'on-primary':[0,0,100],gold:[225,71.111111,88.235294],'gold-soft':[0,0,100],'hero-accent':[0,0,100]
  }},
  {id:'blue-white',name:'Blue & White',mode:'light',bright:true,fresh:true,colours:'Pure white · ECB royal blue · neutral grey',hsbTokens:{
   canvas:[0,0,100],surface:[0,0,100],'surface-alt':[220,2,97],ink:[220,12,29],muted:[220,10,40],line:[220,5,89],primary:[220.392157,100,60],'on-primary':[0,0,100],gold:[220.392157,100,60],'gold-soft':[220,5,98],'hero-accent':[0,0,100]

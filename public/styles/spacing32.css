@@ -40,3 +40,5 @@
  .lc-reveal[data-enter=soft]:not(.is-revealed){transform:translateY(20px) scale(.98)}
 }
 @media(prefers-reduced-motion:reduce){.ac-gph-cube .ac-wing-cube{transition:none}}
+
+.booking-icon svg{display:block;width:32px;height:32px}.couture-mobile-nav .nav-icon{display:flex;align-items:center;justify-content:center;line-height:1}.ac-header .ac-account{display:flex;align-items:center;justify-content:center}
