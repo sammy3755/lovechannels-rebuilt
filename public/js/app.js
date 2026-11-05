@@ -1,3 +1,4 @@
+import {initSessionMonitor} from './session.js';
 import {applyPalette} from './palettes.js';
 import {initFont} from './fonts.js';
 import {publicPages,initAnalytics} from './information.js';
@@ -16,8 +17,10 @@ if(new URLSearchParams(location.search).get('look')==='ivory')document.documentE
 const requestedTheme=new URLSearchParams(location.search).get('look');if(Object.hasOwn(themeNames,requestedTheme))document.documentElement.dataset.theme=requestedTheme;
 applyPalette(document.documentElement.dataset.theme);
 initFont();
+initSessionMonitor();
+window.addEventListener('lc-session-expired',()=>{user=null;if(document.querySelector('.portal')){closeModal();render();toast('Your session has expired. Please sign in again.');}});
 const authError=new URLSearchParams(location.hash.split('?')[1]||'').get('authError');
-if(authError){setTimeout(()=>toast(authError==='link-required'?'Sign in with your password, then connect Google in your member profile.':'Google sign-in could not be completed. Please try again.'),1200);history.replaceState(null,'',location.pathname+location.search+'#/');}
+if(authError){setTimeout(()=>toast(authError==='link-required'?'Sign in with your password, then connect Google in your member profile.':authError==='admin-required'?'Use an administrator account to continue.':'Google sign-in could not be completed. Please try again.'),1200);history.replaceState(null,'',location.pathname+location.search+(location.hash.startsWith('#/admin')?'#/admin':'#/'));}
 document.addEventListener('click', event => { const eye=event.target.closest('[data-password-toggle]');if(eye){const input=eye.closest('.password-wrap').querySelector('input');const show=input.type==='password';input.type=show?'text':'password';eye.setAttribute('aria-pressed',String(show));eye.setAttribute('aria-label',show?'Hide password':'Show password');} if (event.target.closest('[data-close]')) closeModal(); });
 $('#modal').addEventListener('click', event => { if (event.target === $('#modal')) { const rect = $('#modal').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeModal(); } });
 
@@ -48,10 +51,14 @@ async function render(resetScroll = false) {
     }
     if (!user) {
       $('#app').innerHTML = renderSite(data,null); initSite(data,openAuth); activateThemeButtons();
-      openAuth(data, authenticated => { user = authenticated; const target=`#/${authenticated.role === 'admin' ? 'admin' : 'member'}/${parts[1] || 'overview'}${location.hash.includes('?')?'?'+location.hash.split('?')[1]:''}`;if(location.hash===target)render(true);else location.hash=target; }, page === 'admin');
+      openAuth(data, authenticated => { user = authenticated; const target=`#/${page==='admin'||authenticated.role==='admin'?'admin':'member'}/${parts[1] || 'overview'}${location.hash.includes('?')?'?'+location.hash.split('?')[1]:''}`;if(location.hash===target)render(true);else location.hash=target; }, page === 'admin');
       return;
     }
-    if (page === 'admin' && user.role !== 'admin') { toast('Administrator access is required.'); location.hash = '#/member'; return; }
+    if(page==='admin'&&user.role!=='admin'){
+      $('#app').innerHTML=renderSite(data,user);initSite(data,openAuth);activateThemeButtons();
+      openAuth(data,authenticated=>{user=authenticated;const target='#/admin/'+(parts[1]||'overview');if(location.hash===target)render(true);else location.hash=target;},true,'You are signed in with a member account. Enter an administrator account to switch securely.');
+      return;
+    }
     const nav = page === 'admin' ? adminNav : memberNav;
     const tab = nav.some(item => item[0] === parts[1]) ? parts[1] : 'overview';
     const portal = await request(page === 'admin' ? '/admin' : '/member');
@@ -66,6 +73,8 @@ async function render(resetScroll = false) {
     if(resetScroll){window.scrollTo(0,0);const heading=$('.portal-title h1');heading.tabIndex=-1;heading.focus({preventScroll:true});}
   } catch (error) {
     if (id !== renderId) return;
+    if(error.status===401){user=null;render();return;}
+    if(error.status===403&&location.hash.startsWith('#/admin')){render();return;}
     $('#app').innerHTML = `<main class="loading" id="main"><p>${e(error.message)}</p><p><a class="button" href="#/">Return home ↗</a></p><p class="form-note">The app needs its Node.js server. Open http://127.0.0.1:4173 after starting it.</p></main>`;
   }
   finally {if(id===renderId)document.body.classList.remove('app-is-loading');}

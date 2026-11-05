@@ -18,14 +18,15 @@ export async function api(req, res, path, body) {
  if(path==='/api/demo')throw new HttpError(404,'Endpoint not found.');
  await rateLimit(req,'api-total',1200);
  if(!['GET','HEAD'].includes(method))await rateLimit(req,'api-write',180);
-  const send = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
+  const send = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify({...data,...('sessionInfo' in req?{session:req.sessionInfo}:{})})); };
  if(path==='/api/auth/config')return send({googleEnabled:googleEnabled()});
  if(path.startsWith('/api/auth/google/'))return googleApi(req,res,path,body,send);
   if(path.startsWith('/api/payments/'))return send(await paymentApi(req,path,body));
   if(/^\/api\/(analytics|campaign-leads|questions|connections)$/.test(path)||/^\/api\/admin\/(growth-settings|campaigns|homecells|connections|questions|followups)(?:\/|$)/.test(path))return send(await growthApi(req,path,body));
   if (path === '/api/public' && method === 'GET') return send({ googleEnabled:googleEnabled(),settings: getDoc('settings'), services: getDoc('services'), wings: getDoc('wings'), events:publicEvents(),editorial:publicEditorial(),assets:assets(),...publicCommunity(),growth:publicGrowth() });
   if(path.startsWith('/api/admin/editorial/')||path==='/api/admin/uploads')return send(await editorialApi(req,path,body));
-  if (path === '/api/session' && method === 'GET') { const user = currentUser(req); return send({ user: user ? publicUser(user) : null }); }
+  if (path === '/api/session' && method === 'GET') { const user = currentUser(req,false); return send({ user: user ? publicUser(user) : null }); }
+  if(path==='/api/session/touch'&&method==='POST'){await rateLimit(req,'session-touch',120);const user=requireUser(req);return send({user:publicUser(user)});}
   if (path === '/api/login' && method === 'POST') {
     rateLimit(req, 'login');
     const email = emailField(body.email), password = passwordField(body.password);
@@ -34,8 +35,9 @@ export async function api(req, res, path, body) {
     // A dummy hash computation keeps unknown-email attempts similarly expensive.
     const valid = await validPassword(password, user?.password || dummyPassword);
     assert(user && valid, 'Email or password is incorrect.', 401);
+    assert(body.admin!==true||user.role==='admin','Use an administrator account to access administration.',403);
     if(!user.password.startsWith('scrypt-v2:'))db.prepare('UPDATE users SET password=? WHERE id=?').run(await hashPassword(password),user.id);
-    startSession(res, user.id); return send({ user: publicUser(user) });
+    startSession(res, user.id,req); return send({ user: publicUser(user) });
   }
   if (path === '/api/register' && method === 'POST') {
     rateLimit(req, 'register', 8);
@@ -44,7 +46,7 @@ export async function api(req, res, path, body) {
     assert(!db.prepare('SELECT id FROM users WHERE email=?').get(email), 'An account already exists with this email.', 409);
     const result = db.prepare('INSERT INTO users(name,email,password) VALUES(?,?,?)').run(name, email, await hashPassword(password));
     const user = db.prepare('SELECT * FROM users WHERE id=?').get(result.lastInsertRowid);
-    startSession(res, user.id); return send({ user: publicUser(user) }, 201);
+    startSession(res, user.id,req); return send({ user: publicUser(user) }, 201);
   }
 if (path === '/api/logout' && method === 'POST') { endSession(req, res); return send({ ok: true }); }
   if (path === '/api/visits' && method === 'POST') {
@@ -74,7 +76,7 @@ if (path === '/api/logout' && method === 'POST') { endSession(req, res); return 
     assert(next.length >= 15, 'Use at least 15 characters.');
     db.prepare('UPDATE users SET password=? WHERE id=?').run(await hashPassword(next), user.id);
     db.prepare('DELETE FROM sessions WHERE user_id=?').run(user.id);
-    startSession(res, user.id); return send({ ok: true });
+    startSession(res, user.id,req); return send({ ok: true });
   }
   if (path === '/api/souls' && method === 'POST') {
     const name = field(body.name, 'Name', 100), phone = optional(body.phone, 'Phone', 40), notes = optional(body.notes, 'Notes', 2000), followup = optional(body.followup, 'Follow-up', 10);

@@ -9,7 +9,12 @@ export const e = escapeHTML;
 export async function request(path, data, method = 'POST') {
   const response = await fetch(`/api${path}`, data === undefined ? { credentials: 'same-origin' } : { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Unable to complete your request.');
+  if (!response.ok) {
+    const error=new Error(result.error||'Unable to complete your request.');error.status=response.status;
+    if(response.status===401&&!['/login','/register','/auth/google/start'].includes(path))window.dispatchEvent(new Event('lc-session-expired'));
+    throw error;
+  }
+  if(Object.hasOwn(result,'session'))window.dispatchEvent(new CustomEvent('lc-session-update',{detail:{session:result.session,user:result.user}}));
   return result;
 }
 let toastTimer;

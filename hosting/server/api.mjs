@@ -17,7 +17,7 @@ export async function api(req, res, path, body) {
  if(path==='/api/demo')throw new HttpError(404,'Endpoint not found.');
  await rateLimit(req,'api-total',1200);
  if(!['GET','HEAD'].includes(method))await rateLimit(req,'api-write',180);
-    const send = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
+    const send = (data, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify({...data,...('sessionInfo' in req?{session:req.sessionInfo}:{})})); };
  if(path==='/api/auth/config')return send({googleEnabled:googleEnabled()});
  if(path.startsWith('/api/auth/google/'))return googleApi(req,res,path,body,send);
     if (path.startsWith('/api/payments/'))
@@ -29,10 +29,11 @@ export async function api(req, res, path, body) {
     if (path.startsWith('/api/admin/editorial/') || path === '/api/admin/uploads')
         return send(await editorialApi(req, path, body));
     if (path === '/api/session' && method === 'GET') {
-        const user = (await currentUser(req));
+        const user = (await currentUser(req,false));
         return send({ user: user ? publicUser(user) : null });
     }
-    if (path === '/api/login' && method === 'POST') {
+    if(path==='/api/session/touch'&&method==='POST'){await rateLimit(req,'session-touch',120);const user=await requireUser(req);return send({user:publicUser(user)});}
+  if (path === '/api/login' && method === 'POST') {
         (await rateLimit(req, 'login'));
         const email = emailField(body.email), password = passwordField(body.password);
         await rateLimit(req,'login-account:'+email,10);
@@ -40,8 +41,9 @@ export async function api(req, res, path, body) {
         // A dummy hash computation keeps unknown-email attempts similarly expensive.
         const valid = await validPassword(password, user?.password || dummyPassword);
         assert(user && valid, 'Email or password is incorrect.', 401);
+    assert(body.admin!==true||user.role==='admin','Use an administrator account to access administration.',403);
     if(!user.password.startsWith('scrypt-v2:'))await db.prepare('UPDATE users SET password=? WHERE id=?').run(await hashPassword(password),user.id);
-        (await startSession(res, user.id));
+        (await startSession(res, user.id,req));
         return send({ user: publicUser(user) });
     }
     if (path === '/api/register' && method === 'POST') {
@@ -51,7 +53,7 @@ export async function api(req, res, path, body) {
         assert(!(await db.prepare('SELECT id FROM users WHERE email=?').get(email)), 'An account already exists with this email.', 409);
         const result = (await db.prepare('INSERT INTO users(name,email,password) VALUES(?,?,?)').run(name, email, await hashPassword(password)));
         const user = (await db.prepare('SELECT * FROM users WHERE id=?').get(result.lastInsertRowid));
-        (await startSession(res, user.id));
+        (await startSession(res, user.id,req));
         return send({ user: publicUser(user) }, 201);
     }
   if (path === '/api/logout' && method === 'POST') {
@@ -87,7 +89,7 @@ export async function api(req, res, path, body) {
         assert(next.length >= 15, 'Use at least 15 characters.');
         (await db.prepare('UPDATE users SET password=? WHERE id=?').run(await hashPassword(next), user.id));
         (await db.prepare('DELETE FROM sessions WHERE user_id=?').run(user.id));
-        (await startSession(res, user.id));
+        (await startSession(res, user.id,req));
         return send({ ok: true });
     }
     if (path === '/api/souls' && method === 'POST') {

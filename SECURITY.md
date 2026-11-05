@@ -51,9 +51,17 @@ Keep dependencies patched, restrict platform access, and review logs and backups
 
 ## Session duration
 
-Member and administrator sessions have a fixed 24-hour lifetime from sign-in.
-Activity does not extend it, and there is no separate inactivity timeout.
-After expiry the next protected action requires sign-in again. Logout revokes
-the current session immediately; a password change revokes other sessions.
-Removing public administrator links is a navigation change: API role checks
-remain the access boundary for administration.
+Member sessions expire after 15 minutes without authenticated activity or after
+8 hours from sign-in, whichever comes first. Administrator sessions expire after
+5 minutes without authenticated activity or after 2 hours from sign-in. The API
+enforces both deadlines with server timestamps. Activity renews only the idle
+limit; it never extends the maximum lifetime. Background status checks do not
+renew either deadline. The browser locks private screens when the deadline passes.
+
+Existing sessions without these timestamps are invalid after this upgrade and
+require sign-in again. Logout revokes the current session; switching accounts
+revokes the replaced browser session. Password changes revoke other sessions.
+An authenticated member opening the admin route is offered administrator sign-in,
+not redirected to the member dashboard. Both password and Google admin sign-in
+require an administrator role from the database. Public navigation does not link
+to administration; server permissions remain the access boundary.
