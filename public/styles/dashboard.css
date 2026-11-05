@@ -35,7 +35,7 @@
 .panel-heading a { font-size: 10px; color: var(--gold); }
 .panel>h2 { font: 30px var(--serif); margin-bottom: 23px; }
 .welcome-card { background: #294638; color: #fff7e5; padding: 35px; border-radius: 5px; margin-bottom: 26px; position: relative; overflow: hidden; }
-.welcome-card::after { content: '✳'; font: 200px/1 Georgia,serif; color: #ffffff0b; position: absolute; right: -5px; top: -25px; }
+.welcome-card::after { content: none; }
 .welcome-card .eyebrow { color: #d9c395; }
 .welcome-card h2 { font: 37px/1.2 var(--serif); margin-block: 15px; max-width: 550px; }
 .welcome-card p { font-size: 11px; color: #dfdfd1; }
@@ -128,4 +128,14 @@ td select { font-size: 11px; min-width: 145px; }
  .couture-mobile-nav .nav-icon svg{display:block;width:23px;height:23px}
  .couture-mobile-nav a{min-width:0}
  .couture-mobile-nav small{font-size:10px!important;letter-spacing:0!important}
+}
+
+/* Mobile portal refinements: drawer clears the bottom dock and keeps its full menu accessible. */
+@media (max-width: 760px) {
+  .portal .portal-sidebar { z-index: 120; height: 100dvh; max-height: 100dvh; padding-bottom: calc(24px + env(safe-area-inset-bottom)); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  body:has(.portal-sidebar.open) .couture-mobile-nav { visibility: hidden; pointer-events: none; }
+  .couture-mobile-nav { min-height: 58px !important; height: calc(58px + env(safe-area-inset-bottom)) !important; padding-top: 3px !important; padding-bottom: env(safe-area-inset-bottom) !important; }
+  .couture-mobile-nav a, .couture-mobile-nav button { min-height: 46px; gap: 2px; padding-block: 3px; }
+  .couture-mobile-nav .nav-icon svg { width: 22px; height: 22px; }
+  .portal-main { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 }
