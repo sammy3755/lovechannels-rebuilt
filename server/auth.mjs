@@ -7,21 +7,24 @@ export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 export const assert = (condition, message, status = 400) => { if (!condition) throw new HttpError(status, message); };
+const cookieName=scope=>scope==='admin'?'lc_admin_session':'lc_member_session';
+const cookieToken=req=>{const name=cookieName(req.authScope||'member');return req.headers.cookie?.split(';').map(v=>v.trim()).find(v=>v.startsWith(name+'='))?.slice(name.length+1);};
 const digest = token => createHash('sha256').update(token).digest('hex');
 export function currentUser(req,touch=true) {
-  const token=req.headers.cookie?.match(/(?:^|;\s*)lc_session=([a-f0-9]{64})(?:;|$)/)?.[1];
-  req.sessionInfo=null;if(!token)return null;
+  const token=cookieToken(req);const scope=req.authScope||'member';
+  req.sessionInfo=null;if(!token||!/^[a-f0-9]{64}$/.test(token))return null;
   const now=Date.now(),key=digest(token);
-  const user=db.prepare('SELECT users.*,sessions.expires AS session_expires,sessions.issued_at AS session_issued_at,sessions.last_seen AS session_last_seen FROM users JOIN sessions ON users.id=sessions.user_id WHERE sessions.token=?').get(key);
-  if(!sessionIsValid(user,now))return null;
+  const user=db.prepare('SELECT users.*,sessions.expires AS session_expires,sessions.issued_at AS session_issued_at,sessions.last_seen AS session_last_seen,sessions.access_scope AS session_scope FROM users JOIN sessions ON users.id=sessions.user_id WHERE sessions.token=?').get(key);
+  if(!sessionIsValid(user,now)||user.session_scope!==scope||(scope==='admin'&&user.role!=='admin'))return null;
   if(touch){
-    const policy=sessionPolicy(user.role);
+    const policy=sessionPolicy(user.session_scope==='admin'?'admin':'member');
     const changed=db.prepare('UPDATE sessions SET last_seen=CASE WHEN last_seen<? THEN ? ELSE last_seen END WHERE token=? AND expires>? AND last_seen>? AND issued_at>?').run(now,now,key,now,now-policy.idleSeconds*1000,now-policy.absoluteSeconds*1000);
     if(!changed.changes)return null;user.session_last_seen=Math.max(Number(user.session_last_seen),now);
   }
   req.sessionInfo=sessionInfo(user,now);return user;
 }
 export function requireUser(req, admin = false) {
+  if(admin)req.authScope='admin';
   const user = currentUser(req);
   assert(user, 'Please sign in to continue.', 401);
   assert(!admin || user.role === 'admin', 'Administrator access is required.', 403);
@@ -29,20 +32,22 @@ export function requireUser(req, admin = false) {
 }
 export function startSession(res,id,req) {
   const user=db.prepare('SELECT role FROM users WHERE id=?').get(id);
+  const scope=req?.authScope||'member';
   assert(user,'Account unavailable.',401);
+  assert(scope!=='admin'||user.role==='admin','Administrator access is required.',403);
   if(req)endSession(req,res);
-  const token=randomBytes(32).toString('hex'),now=Date.now(),policy=sessionPolicy(user.role),expires=now+policy.absoluteSeconds*1000;
+  const token=randomBytes(32).toString('hex'),now=Date.now(),policy=sessionPolicy(scope),expires=now+policy.absoluteSeconds*1000;
   db.prepare('DELETE FROM sessions WHERE expires<?').run(now);
-  db.prepare('INSERT INTO sessions(token,user_id,expires,issued_at,last_seen) VALUES(?,?,?,?,?)').run(digest(token),id,expires,now,now);
-  res.setHeader('Set-Cookie',`lc_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${policy.absoluteSeconds}${process.env.COOKIE_SECURE==='1'?'; Secure':''}`);
-  const info=sessionInfo({...user,session_expires:expires,session_issued_at:now,session_last_seen:now},now);
+  db.prepare('INSERT INTO sessions(token,user_id,expires,issued_at,last_seen,access_scope) VALUES(?,?,?,?,?,?)').run(digest(token),id,expires,now,now,scope);
+  res.setHeader('Set-Cookie',`${cookieName(scope)}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${policy.absoluteSeconds}${process.env.COOKIE_SECURE==='1'?'; Secure':''}`);
+  const info=sessionInfo({...user,session_scope:scope,session_expires:expires,session_issued_at:now,session_last_seen:now},now);
   if(req)req.sessionInfo=info;return info;
 }
 export function endSession(req, res) {
   req.sessionInfo=null;
-  const token = req.headers.cookie?.match(/(?:^|;\s*)lc_session=([^;]+)/)?.[1];
+  const token=cookieToken(req);
   if (token) db.prepare('DELETE FROM sessions WHERE token=?').run(digest(token));
-  res.setHeader('Set-Cookie', `lc_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${process.env.COOKIE_SECURE === '1' ? '; Secure' : ''}`);
+  res.setHeader('Set-Cookie', `${cookieName(req.authScope||'member')}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${process.env.COOKIE_SECURE === '1' ? '; Secure' : ''}`);
 }
 export {validPassword} from './passwords.mjs';
 const limits = new Map();

@@ -70,13 +70,13 @@ test('Google cannot take over an existing administrator by matching email',async
   const out=response();await withDatabase(()=>api(callback,out,'/api/auth/google/callback',{}));return out;
  }
  try{
-  const takeover=await flow();assert.match(takeover.headers.Location,/link-required/);assert.ok(!takeover.headers['Set-Cookie'].some(c=>c.startsWith('lc_session=')));
+  const takeover=await flow();assert.match(takeover.headers.Location,/link-required/);assert.ok(!takeover.headers['Set-Cookie'].some(c=>c.startsWith('lc_member_session=')||c.startsWith('lc_admin_session=')));
   const login=response();await withDatabase(()=>api(req('POST'),login,'/api/login',{email,password:'SecurityTestPassword-123'}));
-  const linked=await flow({link:true,password:'SecurityTestPassword-123'},login.headers['Set-Cookie'].split(';')[0]);assert.equal(linked.headers.Location,'/#/admin');
-  const returning=await flow();assert.equal(returning.headers.Location,'/#/admin');
+  const linked=await flow({link:true,password:'SecurityTestPassword-123'},login.headers['Set-Cookie'].split(';')[0]);assert.equal(linked.headers.Location,'/#/member');
+  const returning=await flow();assert.equal(returning.headers.Location,'/#/member');const adminAccess=await flow({admin:true});assert.equal(adminAccess.headers.Location,'/#/admin');
   email='new-google@example.test';subject='google-new-member';const created=await flow({role:'admin'});assert.equal(created.headers.Location,'/#/member');
   const user=await db.prepare('SELECT role FROM users WHERE email=?').get(email);assert.equal(user.role,'member');
-  const denied=await flow({admin:true});assert.match(denied.headers.Location,/admin\?authError=admin-required/);assert.ok(!denied.headers['Set-Cookie'].some(c=>c.startsWith('lc_session=')));
+  const denied=await flow({admin:true});assert.match(denied.headers.Location,/admin\?authError=admin-required/);assert.ok(!denied.headers['Set-Cookie'].some(c=>c.startsWith('lc_member_session=')||c.startsWith('lc_admin_session=')));
   email='unknown-google@example.test';subject='unknown-admin-intent';const unknown=await flow({admin:true});assert.match(unknown.headers.Location,/admin\?authError=admin-required/);assert.equal(await db.prepare('SELECT id FROM users WHERE email=?').get(email),undefined);
  }finally{globalThis.fetch=original;}
 });

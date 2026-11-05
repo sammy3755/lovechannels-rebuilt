@@ -37,8 +37,8 @@ test('registration validates input, rejects duplicate emails, and sets HttpOnly 
   const other=await call('/register',{name:'Another Member',email:'b@example.test',password:'MemberPassword-123'}); otherCookie=other.cookie;
 });
 test('member cannot access admin data or impersonate admin role', async () => {
-  assert.equal((await call('/admin',undefined,{cookie:memberCookie})).status,403);
-  assert.equal((await call('/admin/settings',{announcement:'hacked'},{cookie:memberCookie,method:'PUT'})).status,403);
+  assert.equal((await call('/admin',undefined,{cookie:memberCookie})).status,401);
+  assert.equal((await call('/admin/settings',{announcement:'hacked'},{cookie:memberCookie,method:'PUT'})).status,401);
 });
 test('profile updates persist and invalid wing is rejected', async () => {
   const body={name:'Updated Member',phone:'+234000000000',location:'Port Harcourt',wing:'kings',role:'admin'};
@@ -69,7 +69,7 @@ test('RSVP creation is idempotent and can be cancelled', async () => {
   await call('/rsvp',{event:'success',attending:false},{cookie:memberCookie}); assert.equal((await call('/member',undefined,{cookie:memberCookie})).data.rsvps.length,0);
 });
 test('admin content updates reach public site and unsafe links are rejected', async () => {
-  const auth=await call('/login',{email:'admin@thelovechannels.local',password:'TestAdminPassword-321'}); assert.equal(auth.status,200); adminCookie=auth.cookie;
+  const auth=await call('/login',{email:'admin@thelovechannels.local',password:'TestAdminPassword-321',admin:true}); assert.equal(auth.status,200); adminCookie=auth.cookie;
   await call('/admin/settings',{announcement:'An updated church announcement'},{cookie:adminCookie,method:'PUT'});
   assert.equal((await call('/public')).data.settings.announcement,'An updated church announcement');
   assert.equal((await call('/admin/settings',{livestream:'javascript:alert(1)'},{cookie:adminCookie,method:'PUT'})).status,400);
@@ -118,7 +118,7 @@ test('normal mode has no demo access or sample member records', async () => {
     assert.ok(ready,output);
     assert.equal((await (await fetch(`${normalOrigin}/api/public`)).json()).demoMode,undefined);
     assert.equal((await fetch(`${normalOrigin}/api/demo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'admin'})})).status,404);
-    const login=await fetch(`${normalOrigin}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'admin@thelovechannels.local',password:'NormalAdminPassword-321'})});
+    const login=await fetch(`${normalOrigin}/api/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'admin@thelovechannels.local',password:'NormalAdminPassword-321',admin:true})});
     assert.equal(login.status,200);
     const cookie=login.headers.get('set-cookie').split(';')[0];
     const admin=await (await fetch(`${normalOrigin}/api/admin`,{headers:{Cookie:cookie}})).json();
@@ -157,7 +157,7 @@ test('giving records start unverified, reject invalid amounts, and carry finance
   const result=await call('/giving',{fund:'Offering',amount:'1500.50',reference:'BANK-TEST',status:'Verified'},{cookie:workflowCookie});
   const records=(await call('/member',undefined,{cookie:workflowCookie})).data.contributions;
   assert.equal(records[0].amount_kobo,150050);assert.equal(records[0].status,'Awaiting verification');
-  assert.equal((await call(`/admin/giving/${result.data.id}`,{status:'Verified'},{cookie:workflowCookie,method:'PUT'})).status,403);
+  assert.equal((await call(`/admin/giving/${result.data.id}`,{status:'Verified'},{cookie:workflowCookie,method:'PUT'})).status,401);
   await call(`/admin/giving/${result.data.id}`,{status:'Verified',admin_note:'Confirmed by finance.'},{cookie:adminCookie,method:'PUT'});
   assert.equal((await call('/member',undefined,{cookie:workflowCookie})).data.contributions[0].status,'Verified');
   assert.equal((await call('/member',undefined,{cookie:otherCookie})).data.contributions.length,0);
@@ -173,7 +173,7 @@ test('observations and inbox replies are isolated and admin replies reach the me
 });
 test('resource publishing, book prices, order history, and collection status are authoritative',async()=>{
   const resource={type:'book',title:'A Real Test Book',author:'Church author',description:'A test catalogue item.',price:'2500',url:'',published:true};
-  assert.equal((await call('/admin/resources',resource,{cookie:workflowCookie})).status,403);
+  assert.equal((await call('/admin/resources',resource,{cookie:workflowCookie})).status,401);
   assert.equal((await call('/admin/resources',{...resource,url:'javascript:alert(1)'},{cookie:adminCookie})).status,400);
   await call('/admin/resources',resource,{cookie:adminCookie});resourceId=(await call('/public')).data.resources.find(r=>r.title===resource.title).id;
   assert.equal((await call('/orders',{resource_id:resourceId,quantity:21},{cookie:workflowCookie})).status,400);
@@ -187,7 +187,7 @@ test('resource publishing, book prices, order history, and collection status are
   assert.equal((await call('/orders',{resource_id:resourceId,quantity:1},{cookie:workflowCookie})).status,404);
 });
 test('footer, programme, and giving instructions are editable with validation',async()=>{
-  assert.equal((await call('/admin/community',{bankName:'Test Bank'},{cookie:workflowCookie,method:'PUT'})).status,403);
+  assert.equal((await call('/admin/community',{bankName:'Test Bank'},{cookie:workflowCookie,method:'PUT'})).status,401);
   assert.equal((await call('/admin/community',{accountNumber:'123'},{cookie:adminCookie,method:'PUT'})).status,400);
   assert.equal((await call('/admin/community',{facebook:'javascript:bad'},{cookie:adminCookie,method:'PUT'})).status,400);
   await call('/admin/community',{bankName:'Test Bank',accountName:'Test Church',accountNumber:'0123456789',programs:['A confirmed programme']},{cookie:adminCookie,method:'PUT'});
@@ -195,7 +195,7 @@ test('footer, programme, and giving instructions are editable with validation',a
 });
 
 test('editorial management is admin-only and validates photographs and contact links',async()=>{
- assert.equal((await call('/admin/editorial/people',{name:'Unauthorized',image:'about.webp',published:true},{cookie:otherCookie})).status,403);
+ assert.equal((await call('/admin/editorial/people',{name:'Unauthorized',image:'about.webp',published:true},{cookie:otherCookie})).status,401);
  assert.equal((await call('/admin/editorial/people',{name:'Bad image',image:'../../private.sqlite',published:true},{cookie:adminCookie})).status,400);
  assert.equal((await call('/admin/editorial/people',{name:'Bad link',image:'about.webp',url:'javascript:alert(1)',published:true},{cookie:adminCookie})).status,400);
  assert.equal((await call('/admin/editorial/people',{name:'Browser pastor',role:'Pastor',image:'about.webp',phone:'12345',email:'pastor@example.test',description:'A person added by the church team.',published:true},{cookie:adminCookie})).status,200);
@@ -222,6 +222,6 @@ test('special events support TBA, manual publication and automatic expiry',async
  assert.equal((await call('/admin/events',{...base,date,end:new Date(Date.now()).toISOString()},{cookie:adminCookie})).status,400);
 });
 test('photo uploads reject unauthorised users and invalid image bytes',async()=>{
- const fake={data:'data:image/webp;base64,'+Buffer.from('this is not a real image file').toString('base64')};assert.equal((await call('/admin/uploads',fake,{cookie:otherCookie})).status,403);assert.equal((await call('/admin/uploads',fake,{cookie:adminCookie})).status,400);
+ const fake={data:'data:image/webp;base64,'+Buffer.from('this is not a real image file').toString('base64')};assert.equal((await call('/admin/uploads',fake,{cookie:otherCookie})).status,401);assert.equal((await call('/admin/uploads',fake,{cookie:adminCookie})).status,400);
  const {readFileSync,unlinkSync}=await import('node:fs');const data='data:image/png;base64,'+readFileSync(new URL('../public/assets/icon-32.png',import.meta.url)).toString('base64');const upload=await call('/admin/uploads',{data},{cookie:adminCookie});assert.equal(upload.status,200);assert.ok(/^uploads\/[\w-]+\.png$/.test(upload.data.image));assert.equal((await fetch(`${origin}/assets/${upload.data.image}`)).status,200);unlinkSync(new URL('../public/assets/'+upload.data.image,import.meta.url));
 });

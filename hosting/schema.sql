@@ -119,3 +119,5 @@ CREATE INDEX IF NOT EXISTS oauth_challenges_expiry ON lovechannels.oauth_challen
 ALTER TABLE lovechannels.sessions ADD COLUMN IF NOT EXISTS issued_at BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE lovechannels.sessions ADD COLUMN IF NOT EXISTS last_seen BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE lovechannels.oauth_challenges ADD COLUMN IF NOT EXISTS admin_required BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE lovechannels.sessions ADD COLUMN IF NOT EXISTS access_scope TEXT NOT NULL DEFAULT 'member';

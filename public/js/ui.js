@@ -1,4 +1,4 @@
-import {sessionRevision} from './session.js';
+import {sessionRevision,sessionContext} from './session.js';
 import {hsbToHex} from './hsb-palettes.js';
 import {fontStyles,applyFont} from './fonts.js';
 import {palettes,themeNames,applyPalette} from './palettes.js';
@@ -8,15 +8,15 @@ export const $$ = (selector, root = document) => [...root.querySelectorAll(selec
 export const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 export const e = escapeHTML;
 export async function request(path, data, method = 'POST') {
-  const startedSession=sessionRevision();
-  const response = await fetch(`/api${path}`, data === undefined ? { credentials: 'same-origin' } : { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const startedSession=sessionRevision(),scope=path.startsWith('/admin')||path==='/login'&&data?.admin===true?'admin':path==='/register'?'member':sessionContext();
+  const response = await fetch(`/api${path}`, data === undefined ? {credentials:'same-origin',headers:{'X-Session-Scope':scope}} : { method, credentials: 'same-origin', headers:{'Content-Type':'application/json','X-Session-Scope':scope}, body: JSON.stringify(data) });
   const result = await response.json();
   if (!response.ok) {
     const error=new Error(result.error||'Unable to complete your request.');error.status=response.status;
-    if(response.status===401&&startedSession===sessionRevision()&&!['/login','/register','/auth/google/start'].includes(path))window.dispatchEvent(new Event('lc-session-expired'));
+    if(response.status===401&&scope===sessionContext()&&startedSession===sessionRevision()&&!['/login','/register','/auth/google/start'].includes(path))window.dispatchEvent(new Event('lc-session-expired'));
     throw error;
   }
-  if(Object.hasOwn(result,'session')&&(startedSession===sessionRevision()||['/login','/register','/password'].includes(path)))window.dispatchEvent(new CustomEvent('lc-session-update',{detail:{session:result.session,user:result.user}}));
+  if(Object.hasOwn(result,'session')&&(startedSession===sessionRevision()||['/login','/register','/password'].includes(path)))window.dispatchEvent(new CustomEvent('lc-session-update',{detail:{session:result.session,user:result.user,scope}}));
   return result;
 }
 let toastTimer;

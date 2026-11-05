@@ -15,6 +15,8 @@ const optional = (value, label, max = 500) => field(value ?? '', label, max, fal
 const imageField=asset;
 export async function api(req, res, path, body) {
   const method = req.method;
+  const selected=req.headers['x-session-scope'];assert(!selected||['admin','member'].includes(selected),'Invalid session context.');
+  req.authScope=path.startsWith('/api/admin')?'admin':['/api/session','/api/session/touch','/api/logout','/api/password'].includes(path)&&selected==='admin'?'admin':'member';
  if(path==='/api/demo')throw new HttpError(404,'Endpoint not found.');
  await rateLimit(req,'api-total',1200);
  if(!['GET','HEAD'].includes(method))await rateLimit(req,'api-write',180);
@@ -28,6 +30,7 @@ export async function api(req, res, path, body) {
   if (path === '/api/session' && method === 'GET') { const user = currentUser(req,false); return send({ user: user ? publicUser(user) : null }); }
   if(path==='/api/session/touch'&&method==='POST'){await rateLimit(req,'session-touch',120);const user=requireUser(req);return send({user:publicUser(user)});}
   if (path === '/api/login' && method === 'POST') {
+    req.authScope=body.admin===true?'admin':'member';
     rateLimit(req, 'login');
     const email = emailField(body.email), password = passwordField(body.password);
     await rateLimit(req,'login-account:'+email,10);

@@ -58,10 +58,17 @@ enforces both deadlines with server timestamps. Activity renews only the idle
 limit; it never extends the maximum lifetime. Background status checks do not
 renew either deadline. The browser locks private screens when the deadline passes.
 
-Existing sessions without these timestamps are invalid after this upgrade and
-require sign-in again. Logout revokes the current session; switching accounts
-revokes the replaced browser session. Password changes revoke other sessions.
-An authenticated member opening the admin route is offered administrator sign-in,
-not redirected to the member dashboard. Both password and Google admin sign-in
-require an administrator role from the database. Public navigation does not link
-to administration; server permissions remain the access boundary.
+Member and administrator logins use separate HttpOnly cookies and database session
+scopes. A member login never authorizes administrator APIs, even when the account
+itself has an administrator role. Admin endpoints require both an admin-scoped
+session and a current administrator role from the database. Renaming a cookie or
+changing a request header cannot bypass these checks. Member activity cannot
+renew an administrator session. Password and Google administrator sign-in both
+require the dedicated administrator flow and the database role.
+
+Existing shared-cookie sessions require sign-in again after this upgrade. Logout
+revokes only the selected portal session; signing into another account replaces
+only that portal's session. Password changes revoke other sessions for the account.
+Neither dashboard contains a link for switching into the other dashboard. Public
+navigation does not link to administration; server permissions remain the access
+boundary.

@@ -51,12 +51,12 @@ async function render(resetScroll = false) {
     }
     if (!user) {
       $('#app').innerHTML = renderSite(data,null); initSite(data,openAuth); activateThemeButtons();
-      openAuth(data, authenticated => { user = authenticated; const target=`#/${page==='admin'||authenticated.role==='admin'?'admin':'member'}/${parts[1] || 'overview'}${location.hash.includes('?')?'?'+location.hash.split('?')[1]:''}`;if(location.hash===target)render(true);else location.hash=target; }, page === 'admin');
+      openAuth(data, authenticated => { user = authenticated; const target=`#/${page==='admin'?'admin':'member'}/${parts[1] || 'overview'}${location.hash.includes('?')?'?'+location.hash.split('?')[1]:''}`;if(location.hash===target)render(true);else location.hash=target; }, page === 'admin');
       return;
     }
-    if(page==='admin'&&user.role!=='admin'){
+    if(page==='admin'&&(user.role!=='admin'||session.session?.scope!=='admin')){
       $('#app').innerHTML=renderSite(data,user);initSite(data,openAuth);activateThemeButtons();
-      openAuth(data,authenticated=>{user=authenticated;const target='#/admin/'+(parts[1]||'overview');if(location.hash===target)render(true);else location.hash=target;},true,'You are signed in with a member account. Enter an administrator account to switch securely.');
+      openAuth(data,authenticated=>{user=authenticated;const target='#/admin/'+(parts[1]||'overview');if(location.hash===target)render(true);else location.hash=target;},true,'Administrator access requires a separate administrator sign-in.');
       return;
     }
     const nav = page === 'admin' ? adminNav : memberNav;

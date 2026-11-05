@@ -38,3 +38,5 @@ CREATE TABLE IF NOT EXISTS auth_identities(subject TEXT PRIMARY KEY,user_id INTE
 const sessionColumns=db.prepare('PRAGMA table_info(sessions)').all().map(c=>c.name);
 for(const name of ['issued_at','last_seen'])if(!sessionColumns.includes(name))db.exec(`ALTER TABLE sessions ADD COLUMN ${name} INTEGER NOT NULL DEFAULT 0`);
 if(!db.prepare('PRAGMA table_info(oauth_challenges)').all().some(c=>c.name==='admin_required'))db.exec('ALTER TABLE oauth_challenges ADD COLUMN admin_required INTEGER NOT NULL DEFAULT 0');
+
+if(!db.prepare('PRAGMA table_info(sessions)').all().some(c=>c.name==='access_scope'))db.exec("ALTER TABLE sessions ADD COLUMN access_scope TEXT NOT NULL DEFAULT 'member'");

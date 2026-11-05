@@ -63,8 +63,8 @@ export async function googleApi(req,res,path,body,send){
     user=await db.prepare('SELECT * FROM users WHERE id=?').get(result.lastInsertRowid);
     await db.prepare('INSERT INTO auth_identities(subject,user_id) VALUES(?,?)').run(profile.sub,user.id);
    }
-   assert(user,'Account unavailable.',401);assert(!challenge.admin_required||user.role==='admin','Administrator account required.',403);await startSession(res,user.id,req);
-   destination=user.role==='admin'?'/#/admin':'/#/member';
+   req.authScope=challenge.admin_required?'admin':'member';assert(user,'Account unavailable.',401);assert(!challenge.admin_required||user.role==='admin','Administrator account required.',403);await startSession(res,user.id,req);
+   destination=challenge.admin_required?'/#/admin':'/#/member';
   }catch{/* Deliberately generic: no provider secrets or account details in the response. */}
   cookie(res,'',0);res.writeHead(303,{'Location':destination,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'});return res.end();
  }
