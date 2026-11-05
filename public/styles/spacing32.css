@@ -1,0 +1,42 @@
+/* One rhythm for homepage sections; no stacked parent/child carousel margins. */
+.atelier-site{--section-space:56px}
+.atelier-site main>.ac-section{margin-block:var(--section-space)}
+.atelier-site .ac-gathering-layout{width:var(--ac-page);margin:32px auto 0;gap:32px 40px}
+.ac-gathering-layout>.ac-rings.ac-solo-ring{width:100%;max-width:none;margin:0;min-width:0}
+.ac-gathering-layout .ac-deck .ac-section-head{margin-bottom:12px}
+.ac-gathering-layout .ac-deck .ac-deck-stage{height:466px}
+.atelier-site .ac-section-head{margin-bottom:24px}
+.atelier-site .ac-gathering-layout .ac-section-head{margin-bottom:12px}
+.atelier-site main>.ac-pathways{display:flow-root;margin-block:var(--section-space)}
+.ac-pathways>.journey-section{margin-block:0}
+.atelier-site main>.ac-family-background{display:flow-root;margin-block:var(--section-space);padding-block:24px}
+.ac-family-background>.ac-arrivals{margin-block:0}
+.atelier-site main>.ac-podcasts{padding-block:28px}
+.ac-first-testimony .slider-stage{padding-block:24px}
+.ac-first-testimony .ac-testimony-tools{margin-top:8px}
+.ac-first-testimony .ac-story-links{margin-top:18px;padding-block:16px}
+.ac-people-heading{margin-bottom:20px}
+.ac-people-bio{margin-top:12px}
+/* The inset keeps its edge-centred placement while its own cube flips. */
+.ac-gph-art>.ac-gph-cube{border:5px solid #fff;box-sizing:border-box;background:#fff;box-shadow:0 8px 26px #16355214;outline-offset:4px}
+.ac-gph-cube .ac-cube-face{border:0;border-radius:9px}
+.ac-gph-cube .ac-cube-face img{object-fit:contain;background:#fff}
+@media(min-width:801px) and (max-width:1100px){.ac-gathering-layout .ac-deck .ac-deck-stage{height:448px}}
+@media(max-width:800px){
+ .atelier-site{--section-space:40px}
+ .atelier-site .ac-gathering-layout{margin-top:28px;gap:32px}
+ .ac-gathering-layout .ac-deck .ac-deck-stage{height:458px}
+ .atelier-site .ac-section-head{margin-bottom:20px}
+ .atelier-site .ac-gathering-layout .ac-section-head{margin-bottom:12px}
+ .atelier-site main>.ac-family-background{padding-block:16px}
+ .atelier-site main>.ac-podcasts{padding-block:20px}
+ .ac-first-testimony .slider-stage{padding-block:18px}
+ .ac-first-testimony .ac-story-links{margin-top:14px;padding-block:14px}
+ .ac-gph .ac-gph-copy{gap:16px}
+}
+@media(max-width:380px){.ac-gathering-layout .ac-deck .ac-deck-stage{height:438px}}
+@media(prefers-reduced-motion:no-preference){
+ .lc-reveal{transition-duration:.65s;transition-timing-function:cubic-bezier(.2,.7,.25,1);transition-delay:var(--reveal-delay,0ms)}
+ .lc-reveal[data-enter=soft]:not(.is-revealed){transform:translateY(20px) scale(.98)}
+}
+@media(prefers-reduced-motion:reduce){.ac-gph-cube .ac-wing-cube{transition:none}}
